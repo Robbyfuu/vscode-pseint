@@ -1,0 +1,269 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "PSeInt",
+  "scopeName": "source.pseint",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#constants" },
+    { "include": "#process-declaration" },
+    { "include": "#function-declaration" },
+    { "include": "#subprocess-declaration" },
+    { "include": "#block-end" },
+    { "include": "#control-conditional" },
+    { "include": "#control-loop" },
+    { "include": "#control-switch" },
+    { "include": "#control-return" },
+    { "include": "#io-write" },
+    { "include": "#io-read" },
+    { "include": "#declaration" },
+    { "include": "#type-as" },
+    { "include": "#types" },
+    { "include": "#dimension" },
+    { "include": "#operators-logical" },
+    { "include": "#operators-assignment" },
+    { "include": "#operators-comparison" },
+    { "include": "#operators-arithmetic" },
+    { "include": "#builtin-functions" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.pseint",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.pseint",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "patterns": [
+            {
+              "name": "comment.block.pseint",
+              "match": "."
+            }
+          ]
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.pseint",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.pseint",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.pseint",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.pseint",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.pseint",
+          "match": "\\b[0-9]+\\.[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.pseint",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "constants": {
+      "name": "constant.language.boolean.pseint",
+      "match": "(?i)\\b(Verdadero|Falso)\\b"
+    },
+    "process-declaration": {
+      "match": "(?i)^\\s*(Proceso|Algoritmo)\\s+(\\w+)",
+      "captures": {
+        "1": { "name": "keyword.declaration.process.pseint" },
+        "2": { "name": "entity.name.function.process.pseint" }
+      }
+    },
+    "function-declaration": {
+      "match": "(?i)^\\s*(Funci[oó]n|Funcion)\\s+(?:(\\w+)\\s*(<-|:=)\\s*)?(\\w+)\\s*\\(",
+      "captures": {
+        "1": { "name": "keyword.declaration.function.pseint" },
+        "2": { "name": "variable.other.return.pseint" },
+        "3": { "name": "keyword.operator.assignment.pseint" },
+        "4": { "name": "entity.name.function.pseint" }
+      }
+    },
+    "subprocess-declaration": {
+      "match": "(?i)^\\s*(SubProceso|Sub[Pp]roceso)\\s+(\\w+)\\s*\\(",
+      "captures": {
+        "1": { "name": "keyword.declaration.subprocess.pseint" },
+        "2": { "name": "entity.name.function.subprocess.pseint" }
+      }
+    },
+    "block-end": {
+      "name": "keyword.control.end.pseint",
+      "match": "(?i)\\b(FinProceso|FinAlgoritmo|Fin[Pp]roceso|Fin[Aa]lgoritmo|FinFuncion|Fin[Ff]unci[oó]n|FinSubProceso|Fin[Ss]ub[Pp]roceso)\\b"
+    },
+    "control-conditional": {
+      "patterns": [
+        {
+          "name": "keyword.control.if.pseint",
+          "match": "(?i)\\b(Si)\\b"
+        },
+        {
+          "name": "keyword.control.then.pseint",
+          "match": "(?i)\\b(Entonces)\\b"
+        },
+        {
+          "name": "keyword.control.else.pseint",
+          "match": "(?i)\\b(SiNo|Si[Nn]o|Sino)\\b"
+        },
+        {
+          "name": "keyword.control.endif.pseint",
+          "match": "(?i)\\b(FinSi|Fin[Ss]i)\\b"
+        }
+      ]
+    },
+    "control-loop": {
+      "patterns": [
+        {
+          "name": "keyword.control.for.pseint",
+          "match": "(?i)\\b(Para)\\b"
+        },
+        {
+          "name": "keyword.control.to.pseint",
+          "match": "(?i)\\b(Hasta)\\b(?!\\s*[Qq]ue)"
+        },
+        {
+          "name": "keyword.control.with-step.pseint",
+          "match": "(?i)\\b(Con\\s+[Pp]aso|Paso)\\b"
+        },
+        {
+          "name": "keyword.control.endfor.pseint",
+          "match": "(?i)\\b(FinPara|Fin[Pp]ara)\\b"
+        },
+        {
+          "name": "keyword.control.while.pseint",
+          "match": "(?i)\\b(Mientras)\\b"
+        },
+        {
+          "name": "keyword.control.do.pseint",
+          "match": "(?i)\\b(Hacer)\\b"
+        },
+        {
+          "name": "keyword.control.endwhile.pseint",
+          "match": "(?i)\\b(FinMientras|Fin[Mm]ientras)\\b"
+        },
+        {
+          "name": "keyword.control.repeat.pseint",
+          "match": "(?i)\\b(Repetir)\\b"
+        },
+        {
+          "name": "keyword.control.until.pseint",
+          "match": "(?i)\\b(Hasta\\s+[Qq]ue|HastaQue)\\b"
+        }
+      ]
+    },
+    "control-switch": {
+      "patterns": [
+        {
+          "name": "keyword.control.switch.pseint",
+          "match": "(?i)\\b(Segun|Seg[uú]n)\\b"
+        },
+        {
+          "name": "keyword.control.case.pseint",
+          "match": "(?i)\\b(Hacer)\\b"
+        },
+        {
+          "name": "keyword.control.otherwise.pseint",
+          "match": "(?i)\\b(De\\s+Otro\\s+Modo)\\b"
+        },
+        {
+          "name": "keyword.control.endswitch.pseint",
+          "match": "(?i)\\b(FinSegun|Fin[Ss]egun|Fin[Ss]eg[uú]n)\\b"
+        }
+      ]
+    },
+    "control-return": {
+      "name": "keyword.control.return.pseint",
+      "match": "(?i)\\b(Retornar|Devolver)\\b"
+    },
+    "io-write": {
+      "name": "support.function.io.write.pseint",
+      "match": "(?i)\\b(Escribir|Imprimir|EscribirSinSaltar)\\b"
+    },
+    "io-read": {
+      "name": "support.function.io.read.pseint",
+      "match": "(?i)\\b(Leer)\\b"
+    },
+    "declaration": {
+      "name": "keyword.other.declaration.pseint",
+      "match": "(?i)\\b(Definir|Dim|Dimensi[oó]n|Dimension)\\b"
+    },
+    "type-as": {
+      "name": "keyword.operator.type-as.pseint",
+      "match": "(?i)\\b(Como)\\b"
+    },
+    "types": {
+      "name": "storage.type.pseint",
+      "match": "(?i)\\b(Entero|Real|Numero|N[uú]mero|Caracter|Car[aá]cter|Cadena|Texto|L[oó]gico|Logico)\\b"
+    },
+    "dimension": {
+      "name": "keyword.other.dimension.pseint",
+      "match": "(?i)\\b(Arreglo|Dimension|Dimensi[oó]n)\\b"
+    },
+    "operators-logical": {
+      "name": "keyword.operator.logical.pseint",
+      "match": "(?i)\\b(Y|O|NO|No)\\b"
+    },
+    "operators-assignment": {
+      "name": "keyword.operator.assignment.pseint",
+      "match": "<-|:="
+    },
+    "operators-comparison": {
+      "name": "keyword.operator.comparison.pseint",
+      "match": "<=|>=|<>|!=|==|<|>|="
+    },
+    "operators-arithmetic": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arithmetic.word.pseint",
+          "match": "(?i)\\b(MOD|Mod|mod)\\b"
+        },
+        {
+          "name": "keyword.operator.arithmetic.symbol.pseint",
+          "match": "[+\\-*/\\^%]"
+        }
+      ]
+    },
+    "builtin-functions": {
+      "name": "support.function.builtin.pseint",
+      "match": "(?i)\\b(RC|RAIZ|Raiz|ABS|Abs|TRUNC|Trunc|REDON|Redon|REDONDAR|SEN|Sen|COS|Cos|TAN|Tan|ASEN|Asen|ACOS|Acos|ATAN|Atan|LN|Ln|EXP|Exp|LOG|Log|LONGITUD|Longitud|MAYUSCULAS|Mayusculas|MINUSCULAS|Minusculas|SUBCADENA|Subcadena|CONCATENAR|Concatenar|CONVERTIRANUMERO|ConvertirANumero|CONVERTIRCANUMERO|CONVERTIRASTRING|ConvertirATexto|ALEATORIO|Aleatorio|AZAR|Azar)\\b"
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.separator.comma.pseint",
+          "match": ","
+        },
+        {
+          "name": "punctuation.terminator.semicolon.pseint",
+          "match": ";"
+        }
+      ]
+    }
+  }
+}

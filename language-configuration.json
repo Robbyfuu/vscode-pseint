@@ -1,0 +1,44 @@
+{
+  "comments": {
+    "lineComment": "//",
+    "blockComment": ["/*", "*/"]
+  },
+  "brackets": [
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    { "open": "[", "close": "]" },
+    { "open": "(", "close": ")" },
+    { "open": "\"", "close": "\"", "notIn": ["string"] },
+    { "open": "'", "close": "'", "notIn": ["string"] }
+  ],
+  "surroundingPairs": [
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""],
+    ["'", "'"]
+  ],
+  "folding": {
+    "markers": {
+      "start": "(?i)\\b(Proceso|Algoritmo|Funcion|SubProceso|Si\\b.*Entonces|Mientras\\b.*Hacer|Para\\b|Repetir|Segun)\\b",
+      "end": "(?i)\\b(FinProceso|FinAlgoritmo|FinFuncion|FinSubProceso|FinSi|FinMientras|FinPara|Hasta\\s+Que|FinSegun)\\b"
+    }
+  },
+  "wordPattern": "[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ_][a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ_]*",
+  "indentationRules": {
+    "increaseIndentPattern": "(?i)\\b(Proceso|Algoritmo|Funcion|SubProceso|Entonces|Hacer|SiNo|Sino|De\\s+Otro\\s+Modo|Segun|Repetir)\\s*$",
+    "decreaseIndentPattern": "(?i)^\\s*(FinProceso|FinAlgoritmo|FinFuncion|FinSubProceso|FinSi|FinMientras|FinPara|FinSegun|SiNo|Sino|Hasta\\s+Que|De\\s+Otro\\s+Modo)\\b"
+  },
+  "onEnterRules": [
+    {
+      "beforeText": "(?i).*\\b(Entonces|Hacer)\\s*$",
+      "action": { "indent": "indent" }
+    },
+    {
+      "beforeText": "(?i)^\\s*(SiNo|Sino|De\\s+Otro\\s+Modo)\\s*$",
+      "afterText": "(?i)^\\s*(FinSi|FinSegun)\\b",
+      "action": { "indent": "indent" }
+    }
+  ]
+}

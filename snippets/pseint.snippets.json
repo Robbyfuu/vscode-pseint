@@ -1,0 +1,150 @@
+{
+  "Proceso": {
+    "prefix": ["proceso", "prog", "Proceso"],
+    "body": [
+      "Proceso ${1:nombre}",
+      "\t$0",
+      "FinProceso"
+    ],
+    "description": "Estructura principal Proceso...FinProceso"
+  },
+  "Algoritmo": {
+    "prefix": ["algoritmo", "Algoritmo"],
+    "body": [
+      "Algoritmo ${1:nombre}",
+      "\t$0",
+      "FinAlgoritmo"
+    ],
+    "description": "Estructura principal Algoritmo...FinAlgoritmo"
+  },
+  "Definir Entero": {
+    "prefix": ["defent", "definir entero"],
+    "body": "Definir ${1:variable} Como Entero;",
+    "description": "Definir variable de tipo Entero"
+  },
+  "Definir Real": {
+    "prefix": ["defreal", "definir real"],
+    "body": "Definir ${1:variable} Como Real;",
+    "description": "Definir variable de tipo Real"
+  },
+  "Definir Caracter": {
+    "prefix": ["defcar", "definir caracter"],
+    "body": "Definir ${1:variable} Como Caracter;",
+    "description": "Definir variable de tipo Caracter"
+  },
+  "Definir Cadena": {
+    "prefix": ["defcad", "definir cadena"],
+    "body": "Definir ${1:variable} Como Cadena;",
+    "description": "Definir variable de tipo Cadena"
+  },
+  "Definir Logico": {
+    "prefix": ["deflog", "definir logico"],
+    "body": "Definir ${1:variable} Como Logico;",
+    "description": "Definir variable de tipo Lógico"
+  },
+  "Escribir": {
+    "prefix": ["esc", "escribir", "Escribir", "print"],
+    "body": "Escribir ${1:\"mensaje\"};",
+    "description": "Escribir en pantalla"
+  },
+  "Leer": {
+    "prefix": ["leer", "Leer", "input", "read"],
+    "body": "Leer ${1:variable};",
+    "description": "Leer entrada del usuario"
+  },
+  "Escribir y Leer": {
+    "prefix": ["escleer", "prompt"],
+    "body": [
+      "Escribir ${1:\"Ingrese valor: \"};",
+      "Leer ${2:variable};"
+    ],
+    "description": "Escribir mensaje y leer variable"
+  },
+  "Si...Entonces...FinSi": {
+    "prefix": ["si", "Si", "if"],
+    "body": [
+      "Si ${1:condicion} Entonces",
+      "\t$0",
+      "FinSi"
+    ],
+    "description": "Estructura condicional Si...Entonces"
+  },
+  "Si...SiNo...FinSi": {
+    "prefix": ["sisino", "SiSiNo", "ifelse"],
+    "body": [
+      "Si ${1:condicion} Entonces",
+      "\t$2",
+      "SiNo",
+      "\t$0",
+      "FinSi"
+    ],
+    "description": "Estructura condicional Si...SiNo"
+  },
+  "Mientras...Hacer...FinMientras": {
+    "prefix": ["mientras", "Mientras", "while"],
+    "body": [
+      "Mientras ${1:condicion} Hacer",
+      "\t$0",
+      "FinMientras"
+    ],
+    "description": "Ciclo Mientras"
+  },
+  "Para...FinPara": {
+    "prefix": ["para", "Para", "for"],
+    "body": [
+      "Para ${1:i} <- ${2:1} Hasta ${3:10} Con Paso ${4:1} Hacer",
+      "\t$0",
+      "FinPara"
+    ],
+    "description": "Ciclo Para con paso"
+  },
+  "Repetir...Hasta Que": {
+    "prefix": ["repetir", "Repetir", "dowhile"],
+    "body": [
+      "Repetir",
+      "\t$0",
+      "Hasta Que ${1:condicion}"
+    ],
+    "description": "Ciclo Repetir...Hasta Que"
+  },
+  "Segun...FinSegun": {
+    "prefix": ["segun", "Segun", "switch"],
+    "body": [
+      "Segun ${1:variable} Hacer",
+      "\t${2:valor1}:",
+      "\t\t$3",
+      "\tDe Otro Modo:",
+      "\t\t$0",
+      "FinSegun"
+    ],
+    "description": "Estructura Según (switch)"
+  },
+  "Funcion": {
+    "prefix": ["funcion", "Funcion", "func"],
+    "body": [
+      "Funcion ${1:retorno} <- ${2:nombre}(${3:parametros})",
+      "\t$0",
+      "FinFuncion"
+    ],
+    "description": "Declaración de Función con retorno"
+  },
+  "SubProceso": {
+    "prefix": ["subproceso", "SubProceso", "sub"],
+    "body": [
+      "SubProceso ${1:nombre}(${2:parametros})",
+      "\t$0",
+      "FinSubProceso"
+    ],
+    "description": "Declaración de SubProceso"
+  },
+  "Dimension": {
+    "prefix": ["dim", "dimension", "arreglo"],
+    "body": "Dimension ${1:arreglo}[${2:tamano}];",
+    "description": "Declarar dimensión de arreglo"
+  },
+  "Asignacion": {
+    "prefix": ["asig", "<-"],
+    "body": "${1:variable} <- ${2:valor};",
+    "description": "Asignación de valor"
+  }
+}

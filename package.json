@@ -1,0 +1,154 @@
+{
+  "name": "vscode-pseint",
+  "displayName": "PSeInt - Pseudocódigo en Español",
+  "description": "Soporte completo para pseudocódigo PSeInt (.psc): sintaxis, snippets, ejecución y validación",
+  "version": "0.1.0",
+  "publisher": "robby",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robby/vscode-pseint"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Education"
+  ],
+  "keywords": [
+    "pseint",
+    "pseudocode",
+    "pseudocódigo",
+    "español",
+    "educación",
+    "programación"
+  ],
+  "activationEvents": [
+    "onLanguage:pseint"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "pseint",
+        "aliases": [
+          "PSeInt",
+          "pseint",
+          "Pseudocódigo",
+          "pseudocodigo"
+        ],
+        "extensions": [
+          ".psc"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/pseint-file-light.svg",
+          "dark": "./icons/pseint-file-dark.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "pseint",
+        "scopeName": "source.pseint",
+        "path": "./syntaxes/pseint.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "pseint",
+        "path": "./snippets/pseint.snippets.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "pseint.run",
+        "title": "Ejecutar archivo PSeInt",
+        "icon": "$(play)",
+        "category": "PSeInt"
+      },
+      {
+        "command": "pseint.runSelection",
+        "title": "Ejecutar selección en PSeInt",
+        "icon": "$(play)",
+        "category": "PSeInt"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "pseint.run",
+          "when": "resourceLangId == pseint",
+          "group": "navigation@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "pseint.run",
+          "when": "resourceLangId == pseint",
+          "group": "1_run@1"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "pseint.run",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "resourceLangId == pseint"
+      }
+    ],
+    "configuration": {
+      "title": "PSeInt",
+      "properties": {
+        "pseint.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "Ruta al ejecutable de PSeInt. Dejar vacío para detección automática."
+        },
+        "pseint.runArgs": {
+          "type": "array",
+          "default": [
+            "--nouser"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Argumentos adicionales al ejecutar PSeInt."
+        },
+        "pseint.clearTerminalBeforeRun": {
+          "type": "boolean",
+          "default": true,
+          "description": "Limpiar terminal antes de ejecutar."
+        },
+        "pseint.saveBeforeRun": {
+          "type": "boolean",
+          "default": true,
+          "description": "Guardar archivo antes de ejecutar."
+        }
+      }
+    },
+    "configurationDefaults": {
+      "[pseint]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": false,
+        "editor.wordWrap": "on",
+        "editor.suggest.showKeywords": true
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^3.0.0"
+  }
+}
