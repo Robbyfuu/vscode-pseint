@@ -83,33 +83,8 @@ async function runPseintFile(uri?: vscode.Uri) {
   const pseintPath = findPseintExecutable();
 
   if (!pseintPath) {
-    const action = await vscode.window.showErrorMessage(
-      "No se encontró el ejecutable de PSeInt. ¿Desea configurar la ruta manualmente?",
-      "Configurar ruta",
-      "Abrir con PSeInt App",
-      "Cancelar"
-    );
-
-    if (action === "Configurar ruta") {
-      const selected = await vscode.window.showOpenDialog({
-        canSelectFiles: true,
-        canSelectFolders: false,
-        canSelectMany: false,
-        title: "Seleccionar ejecutable de PSeInt",
-      });
-      if (selected?.[0]) {
-        await config.update("executablePath", selected[0].fsPath, true);
-        await runPseintFile(uri);
-      }
-      return;
-    }
-
-    if (action === "Abrir con PSeInt App") {
-      openWithPseintApp(filePath);
-      return;
-    }
-
-    return;
+    // PSeInt no instalado — usar intérprete embebido automáticamente
+    return runWithInterpreter(uri);
   }
 
   const args = config.get<string[]>("runArgs") || ["--nouser"];
