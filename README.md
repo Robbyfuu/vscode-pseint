@@ -1,130 +1,169 @@
-# PSeInt para VS Code / Cursor
+# PSeInt - Pseudocódigo en Español
 
-Extensión que agrega soporte completo para pseudocódigo **PSeInt** (`.psc`) en Visual Studio Code y Cursor. Incluye un **intérprete embebido** que permite ejecutar programas PSeInt sin instalar software adicional.
+> Escribe, ejecuta y aprende pseudocódigo PSeInt directamente en VS Code y Cursor. **Sin instalar nada más.**
+
+## Inicio rápido
+
+1. Instala la extensión desde el marketplace
+2. Crea un archivo `.psc`
+3. Escribe tu programa (los snippets te ayudan — escribe `proceso` y presiona Tab)
+4. Ejecuta con `Cmd+Shift+I` (Mac) / `Ctrl+Shift+I` (Windows/Linux)
+
+```
+Proceso HolaMundo
+    Escribir "Hola Mundo!"
+FinProceso
+```
 
 ## Características
 
-- **Intérprete embebido** — ejecuta pseudocódigo PSeInt directamente en VS Code, sin necesidad de instalar PSeInt
-- **Resaltado de sintaxis** — todas las palabras clave de PSeInt en español
-- **Snippets** — estructuras comunes con autocompletado (Proceso, Si, Mientras, Para, etc.)
-- **Validación en tiempo real** — detecta bloques sin cerrar (FinSi, FinMientras, etc.)
-- **Ejecutar archivos** — dos opciones: intérprete embebido (`Cmd+Shift+I`) o PSeInt nativo (`Cmd+Shift+R`)
-- **Plegado de código** — colapsa bloques Si/Para/Mientras/Funciones
-- **Indentación automática** — indenta al entrar en bloques
-- **Ícono de archivo** — identifica archivos `.psc` en el explorador
-- **Errores en español** — mensajes de error claros con número de línea
+### Intérprete embebido
 
-## Instalación
+Ejecuta programas PSeInt directamente en el editor. No necesitas descargar ni configurar PSeInt.
 
-### Desde VS Code Marketplace
+- **Cmd+Shift+I** para ejecutar
+- Salida en el panel "PSeInt - Intérprete"
+- Entrada de datos via cuadro de diálogo (`Leer`)
+- Errores en español con número de línea
+- Protección contra ciclos infinitos
 
-Busca **"PSeInt"** en la pestaña de extensiones de VS Code o Cursor.
+### Resaltado de sintaxis
 
-### Desde VSIX
+Todas las palabras clave de PSeInt resaltadas con colores. Soporte completo para caracteres en español (á, é, í, ó, ú, ñ).
 
-```bash
-cd vscode-pseint
-pnpm install
-pnpm run compile
-pnpm run package
-```
+### Snippets inteligentes
 
-Esto genera un archivo `vscode-pseint-0.2.0.vsix`. Luego:
+Escribe las primeras letras y presiona Tab:
 
-1. En Cursor/VSCode: `Cmd+Shift+P` → "Extensions: Install from VSIX..."
-2. Seleccionar el archivo `.vsix`
-3. Reiniciar el editor
-
-### Desarrollo local
-
-```bash
-cd vscode-pseint
-pnpm install
-pnpm run watch
-```
-
-Presionar `F5` para abrir una ventana de desarrollo con la extensión cargada.
-
-## Uso
-
-### Abrir archivos `.psc`
-
-Los archivos se reconocen automáticamente como PSeInt con resaltado de sintaxis.
-
-### Ejecutar con intérprete embebido (recomendado)
-
-No necesitas instalar PSeInt. La extensión incluye su propio intérprete:
-
-- Atajo: `Cmd+Shift+I` (Mac) / `Ctrl+Shift+I` (Windows/Linux)
-- Click derecho → "Ejecutar con intérprete embebido"
-- Paleta de comandos: "PSeInt: Ejecutar con intérprete embebido"
-
-La salida aparece en el panel "PSeInt - Intérprete". Para `Leer`, aparece un cuadro de diálogo donde puedes ingresar valores.
-
-#### Qué soporta el intérprete
-
-- Tipos: `Entero`, `Real`, `Cadena`, `Logico`
-- Control: `Si/SiNo`, `Mientras`, `Para` (con paso), `Repetir/Hasta Que`, `Segun`
-- I/O: `Escribir`, `Escribir Sin Saltar`, `Leer`
-- Arrays: `Dimension` (1D, indexación base-1)
-- Funciones: `RC`, `Abs`, `Trunc`, `Redon`, `Longitud`, `Subcadena`, `Mayusculas`, `Minusculas`, `Concatenar`, `ConvertirANumero`, `ConvertirATexto`, `Azar`, `Aleatorio`
-- Operadores: aritméticos, comparación, lógicos (`Y`, `O`, `NO`)
-
-### Ejecutar con PSeInt nativo
-
-Si tienes PSeInt instalado, también puedes ejecutar con el binario nativo:
-
-- Botón de play en la barra del editor
-- Atajo: `Cmd+Shift+R` (Mac) / `Ctrl+Shift+R` (Windows/Linux)
-- Click derecho → "Ejecutar archivo PSeInt"
-
-### Snippets disponibles
-
-| Prefijo | Estructura |
-|---------|-----------|
+| Escribe | Genera |
+|---------|--------|
 | `proceso` | Proceso...FinProceso |
 | `si` | Si...Entonces...FinSi |
 | `sisino` | Si...SiNo...FinSi |
 | `mientras` | Mientras...Hacer...FinMientras |
-| `para` | Para...Hasta...Con Paso...FinPara |
+| `para` | Para...Con Paso...FinPara |
 | `repetir` | Repetir...Hasta Que |
 | `segun` | Segun...FinSegun |
-| `funcion` | Funcion...FinFuncion |
-| `subproceso` | SubProceso...FinSubProceso |
 | `escribir` | Escribir |
 | `leer` | Leer |
 | `escleer` | Escribir + Leer |
-| `defent` | Definir...Como Entero |
-| `defreal` | Definir...Como Real |
-| `defcar` | Definir...Como Caracter |
-| `defcad` | Definir...Como Cadena |
-| `deflog` | Definir...Como Logico |
+| `defent` | Definir Como Entero |
+| `defreal` | Definir Como Real |
+| `defcad` | Definir Como Cadena |
+| `deflog` | Definir Como Logico |
 | `dim` | Dimension arreglo |
+| `funcion` | Funcion...FinFuncion |
+| `subproceso` | SubProceso...FinSubProceso |
+
+### Validación en tiempo real
+
+Detecta errores mientras escribes:
+- Bloques sin cerrar (falta `FinSi`, `FinMientras`, etc.)
+- Bloques de cierre sin apertura correspondiente
+
+### Más características
+
+- Plegado de código (colapsa bloques)
+- Indentación automática al entrar en bloques
+- Ícono personalizado para archivos `.psc`
+- Soporte para comentarios (`//` y `/* */`)
+
+## Qué soporta el intérprete
+
+| Categoría | Instrucciones |
+|-----------|--------------|
+| **Tipos** | `Entero`, `Real`, `Cadena`, `Logico` |
+| **Variables** | `Definir...Como`, asignación con `<-` |
+| **Entrada/Salida** | `Escribir`, `Escribir Sin Saltar`, `Leer` |
+| **Condicionales** | `Si...Entonces...SiNo...FinSi` |
+| **Ciclos** | `Mientras...Hacer`, `Para...Hasta...Con Paso`, `Repetir...Hasta Que` |
+| **Selección** | `Segun...Hacer...De Otro Modo...FinSegun` |
+| **Arreglos** | `Dimension` (1D, indexación base-1) |
+| **Operadores** | `+`, `-`, `*`, `/`, `^`, `MOD`, `=`, `<>`, `<`, `>`, `Y`, `O`, `NO` |
+
+### Funciones incorporadas
+
+| Función | Descripción |
+|---------|-------------|
+| `RC(x)` / `Raiz(x)` | Raíz cuadrada |
+| `Abs(x)` | Valor absoluto |
+| `Trunc(x)` | Truncar a entero |
+| `Redon(x)` | Redondear |
+| `Longitud(s)` | Largo de cadena |
+| `Subcadena(s, inicio, fin)` | Extraer subcadena (base-1) |
+| `Mayusculas(s)` | Convertir a mayúsculas |
+| `Minusculas(s)` | Convertir a minúsculas |
+| `Concatenar(s1, s2)` | Unir cadenas |
+| `ConvertirANumero(s)` | Texto a número |
+| `ConvertirATexto(n)` | Número a texto |
+| `Azar(n)` | Entero aleatorio en [0, n-1] |
+| `Aleatorio(a, b)` | Entero aleatorio en [a, b] |
+
+## Atajos de teclado
+
+| Atajo | Acción |
+|-------|--------|
+| `Cmd+Shift+I` / `Ctrl+Shift+I` | Ejecutar con intérprete embebido |
+| `Cmd+Shift+R` / `Ctrl+Shift+R` | Ejecutar con PSeInt nativo (requiere PSeInt instalado) |
 
 ## Configuración
 
 | Propiedad | Default | Descripción |
 |-----------|---------|-------------|
-| `pseint.executablePath` | `""` | Ruta al ejecutable de PSeInt |
-| `pseint.runArgs` | `["--nouser"]` | Argumentos al ejecutar |
+| `pseint.executablePath` | `""` | Ruta al ejecutable de PSeInt (solo para ejecución nativa) |
+| `pseint.runArgs` | `["--nouser"]` | Argumentos al ejecutar con PSeInt nativo |
 | `pseint.clearTerminalBeforeRun` | `true` | Limpiar terminal antes de ejecutar |
 | `pseint.saveBeforeRun` | `true` | Guardar archivo antes de ejecutar |
 
-### Instalar PSeInt
+## Ejecutar con PSeInt nativo (opcional)
 
-Descarga PSeInt desde [pseint.sourceforge.net](http://pseint.sourceforge.net/).
+Si prefieres usar el binario oficial de PSeInt:
 
-- **macOS**: Descargar `.dmg`, arrastrar a `/Applications`
-- **Linux**: Descargar y extraer; el binario `pseint` queda en la carpeta
-- **Windows**: Ejecutar el instalador `.exe`
-
-Si la extensión no detecta PSeInt automáticamente, configura la ruta en settings:
+1. Descarga PSeInt desde [pseint.sourceforge.net](http://pseint.sourceforge.net/)
+2. Instálalo en tu sistema
+3. La extensión lo detecta automáticamente, o configura la ruta manualmente:
 
 ```json
 {
   "pseint.executablePath": "/ruta/a/pseint"
 }
 ```
+
+## Ejemplos
+
+La extensión incluye programas de ejemplo en la carpeta `examples/`:
+
+- `01-hola-mundo.psc` — Tu primer programa
+- `02-calculadora.psc` — Operaciones básicas con entrada de datos
+- `03-tabla-multiplicar.psc` — Ciclo Para
+- `04-notas-alumno.psc` — Promedio y Segun
+- `05-fibonacci.psc` — Serie de Fibonacci
+- `06-arreglo-mayor.psc` — Arreglos con Dimension
+- `07-adivina-numero.psc` — Juego con Repetir y Aleatorio
+
+## Limitaciones actuales
+
+El intérprete embebido cubre las instrucciones más usadas en cursos introductorios. Aún **no soporta**:
+
+- Funciones y SubProcesos definidos por el usuario
+- Arreglos multidimensionales
+- Funciones trigonométricas (SEN, COS, TAN, LN, EXP)
+- Depuración paso a paso
+- Archivos
+
+Para programas avanzados, usa la ejecución con PSeInt nativo (`Cmd+Shift+R`).
+
+## Contribuir
+
+```bash
+git clone https://github.com/Robbyfuu/vscode-pseint.git
+cd vscode-pseint
+pnpm install
+pnpm run watch    # compilación en modo watch
+pnpm test         # correr tests (141 tests)
+```
+
+Presiona `F5` en VS Code para abrir una ventana de desarrollo con la extensión cargada.
 
 ## Licencia
 
