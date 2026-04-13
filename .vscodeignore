@@ -2,7 +2,13 @@
 .vscode-test/**
 src/**
 node_modules/**
+.git/**
+.atl/**
 .gitignore
 tsconfig.json
+vitest.config.ts
+pnpm-lock.yaml
 **/*.ts
 **/*.map
+**/*.test.*
+**/__tests__/**

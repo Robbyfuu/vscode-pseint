@@ -1,13 +1,18 @@
 {
   "name": "vscode-pseint",
   "displayName": "PSeInt - Pseudocódigo en Español",
-  "description": "Soporte completo para pseudocódigo PSeInt (.psc): sintaxis, snippets, ejecución y validación",
+  "description": "Soporte completo para pseudocódigo PSeInt (.psc): sintaxis, snippets, intérprete embebido, ejecución y validación",
   "version": "0.2.0",
-  "publisher": "robby",
+  "publisher": "Robbyfuu",
   "license": "MIT",
+  "icon": "icons/pseint-icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robby/vscode-pseint"
+    "url": "https://github.com/Robbyfuu/vscode-pseint"
+  },
+  "homepage": "https://github.com/Robbyfuu/vscode-pseint#readme",
+  "bugs": {
+    "url": "https://github.com/Robbyfuu/vscode-pseint/issues"
   },
   "engines": {
     "vscode": "^1.74.0"
@@ -162,10 +167,10 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "pnpm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "npx @vscode/vsce package --no-dependencies",
+    "package": "pnpm exec vsce package --no-dependencies",
     "test": "vitest run",
     "test:watch": "vitest"
   },

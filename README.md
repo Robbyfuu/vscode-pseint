@@ -1,29 +1,35 @@
 # PSeInt para VS Code / Cursor
 
-Extensión que agrega soporte completo para pseudocódigo **PSeInt** (`.psc`) en Visual Studio Code y Cursor.
+Extensión que agrega soporte completo para pseudocódigo **PSeInt** (`.psc`) en Visual Studio Code y Cursor. Incluye un **intérprete embebido** que permite ejecutar programas PSeInt sin instalar software adicional.
 
 ## Características
 
+- **Intérprete embebido** — ejecuta pseudocódigo PSeInt directamente en VS Code, sin necesidad de instalar PSeInt
 - **Resaltado de sintaxis** — todas las palabras clave de PSeInt en español
 - **Snippets** — estructuras comunes con autocompletado (Proceso, Si, Mientras, Para, etc.)
 - **Validación en tiempo real** — detecta bloques sin cerrar (FinSi, FinMientras, etc.)
-- **Ejecutar archivos** — botón de play y atajo `Cmd+Shift+R` / `Ctrl+Shift+R`
+- **Ejecutar archivos** — dos opciones: intérprete embebido (`Cmd+Shift+I`) o PSeInt nativo (`Cmd+Shift+R`)
 - **Plegado de código** — colapsa bloques Si/Para/Mientras/Funciones
 - **Indentación automática** — indenta al entrar en bloques
 - **Ícono de archivo** — identifica archivos `.psc` en el explorador
+- **Errores en español** — mensajes de error claros con número de línea
 
 ## Instalación
 
-### Desde VSIX (recomendado)
+### Desde VS Code Marketplace
+
+Busca **"PSeInt"** en la pestaña de extensiones de VS Code o Cursor.
+
+### Desde VSIX
 
 ```bash
 cd vscode-pseint
-npm install
-npm run compile
-npm run package
+pnpm install
+pnpm run compile
+pnpm run package
 ```
 
-Esto genera un archivo `vscode-pseint-0.1.0.vsix`. Luego:
+Esto genera un archivo `vscode-pseint-0.2.0.vsix`. Luego:
 
 1. En Cursor/VSCode: `Cmd+Shift+P` → "Extensions: Install from VSIX..."
 2. Seleccionar el archivo `.vsix`
@@ -33,8 +39,8 @@ Esto genera un archivo `vscode-pseint-0.1.0.vsix`. Luego:
 
 ```bash
 cd vscode-pseint
-npm install
-npm run watch
+pnpm install
+pnpm run watch
 ```
 
 Presionar `F5` para abrir una ventana de desarrollo con la extensión cargada.
@@ -45,12 +51,32 @@ Presionar `F5` para abrir una ventana de desarrollo con la extensión cargada.
 
 Los archivos se reconocen automáticamente como PSeInt con resaltado de sintaxis.
 
-### Ejecutar un archivo
+### Ejecutar con intérprete embebido (recomendado)
 
-- Botón ▶️ en la barra del editor (aparece en archivos `.psc`)
-- Click derecho → "Ejecutar archivo PSeInt"
+No necesitas instalar PSeInt. La extensión incluye su propio intérprete:
+
+- Atajo: `Cmd+Shift+I` (Mac) / `Ctrl+Shift+I` (Windows/Linux)
+- Click derecho → "Ejecutar con intérprete embebido"
+- Paleta de comandos: "PSeInt: Ejecutar con intérprete embebido"
+
+La salida aparece en el panel "PSeInt - Intérprete". Para `Leer`, aparece un cuadro de diálogo donde puedes ingresar valores.
+
+#### Qué soporta el intérprete
+
+- Tipos: `Entero`, `Real`, `Cadena`, `Logico`
+- Control: `Si/SiNo`, `Mientras`, `Para` (con paso), `Repetir/Hasta Que`, `Segun`
+- I/O: `Escribir`, `Escribir Sin Saltar`, `Leer`
+- Arrays: `Dimension` (1D, indexación base-1)
+- Funciones: `RC`, `Abs`, `Trunc`, `Redon`, `Longitud`, `Subcadena`, `Mayusculas`, `Minusculas`, `Concatenar`, `ConvertirANumero`, `ConvertirATexto`, `Azar`, `Aleatorio`
+- Operadores: aritméticos, comparación, lógicos (`Y`, `O`, `NO`)
+
+### Ejecutar con PSeInt nativo
+
+Si tienes PSeInt instalado, también puedes ejecutar con el binario nativo:
+
+- Botón de play en la barra del editor
 - Atajo: `Cmd+Shift+R` (Mac) / `Ctrl+Shift+R` (Windows/Linux)
-- Paleta de comandos: "PSeInt: Ejecutar archivo PSeInt"
+- Click derecho → "Ejecutar archivo PSeInt"
 
 ### Snippets disponibles
 
