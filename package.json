@@ -2,7 +2,7 @@
   "name": "vscode-pseint",
   "displayName": "PSeInt - Pseudocódigo en Español",
   "description": "Soporte completo para pseudocódigo PSeInt (.psc): sintaxis, snippets, ejecución y validación",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "robby",
   "license": "MIT",
   "repository": {
@@ -74,6 +74,12 @@
         "title": "Ejecutar selección en PSeInt",
         "icon": "$(play)",
         "category": "PSeInt"
+      },
+      {
+        "command": "pseint.runInterpreter",
+        "title": "Ejecutar con intérprete embebido",
+        "icon": "$(debug-start)",
+        "category": "PSeInt"
       }
     ],
     "menus": {
@@ -82,6 +88,11 @@
           "command": "pseint.run",
           "when": "resourceLangId == pseint",
           "group": "navigation@1"
+        },
+        {
+          "command": "pseint.runInterpreter",
+          "when": "resourceLangId == pseint",
+          "group": "navigation@2"
         }
       ],
       "editor/context": [
@@ -89,6 +100,11 @@
           "command": "pseint.run",
           "when": "resourceLangId == pseint",
           "group": "1_run@1"
+        },
+        {
+          "command": "pseint.runInterpreter",
+          "when": "resourceLangId == pseint",
+          "group": "1_run@2"
         }
       ]
     },
@@ -97,6 +113,12 @@
         "command": "pseint.run",
         "key": "ctrl+shift+r",
         "mac": "cmd+shift+r",
+        "when": "resourceLangId == pseint"
+      },
+      {
+        "command": "pseint.runInterpreter",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
         "when": "resourceLangId == pseint"
       }
     ],
@@ -143,12 +165,15 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "npx @vscode/vsce package --no-dependencies"
+    "package": "npx @vscode/vsce package --no-dependencies",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
     "@types/node": "^18.0.0",
+    "@types/vscode": "^1.74.0",
+    "@vscode/vsce": "^3.0.0",
     "typescript": "^5.3.0",
-    "@vscode/vsce": "^3.0.0"
+    "vitest": "^4.1.4"
   }
 }

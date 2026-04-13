@@ -2,8 +2,13 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { execFile } from "child_process";
+import { interpretSource, PSeIntError } from "./interpreter";
+import { VSCodeIO } from "./interpreter/runtime";
 
 const PSEINT_TERMINAL_NAME = "PSeInt";
+
+let pseintOutputChannel: vscode.OutputChannel | undefined;
+let runtimeDiagnostics: vscode.DiagnosticCollection | undefined;
 
 const KNOWN_PATHS: Record<string, string[]> = {
   darwin: [
@@ -94,7 +99,7 @@ async function runPseintFile(uri?: vscode.Uri) {
       });
       if (selected?.[0]) {
         await config.update("executablePath", selected[0].fsPath, true);
-        runPseintFile(uri);
+        await runPseintFile(uri);
       }
       return;
     }
@@ -155,6 +160,59 @@ function openWithPseintApp(filePath: string) {
         vscode.window.showErrorMessage(`Error al abrir archivo: ${err.message}`);
       }
     });
+  }
+}
+
+async function runWithInterpreter(uri?: vscode.Uri) {
+  const editor = vscode.window.activeTextEditor;
+  if (!uri && !editor) {
+    vscode.window.showErrorMessage("No hay archivo PSeInt abierto.");
+    return;
+  }
+
+  const document = uri
+    ? await vscode.workspace.openTextDocument(uri)
+    : editor!.document;
+
+  if (!document.fileName.endsWith(".psc")) {
+    vscode.window.showWarningMessage("El archivo no es un archivo PSeInt (.psc).");
+    return;
+  }
+
+  const config = vscode.workspace.getConfiguration("pseint");
+  if (config.get<boolean>("saveBeforeRun") && editor?.document.isDirty) {
+    await editor.document.save();
+  }
+
+  if (!pseintOutputChannel) {
+    pseintOutputChannel = vscode.window.createOutputChannel("PSeInt - Intérprete");
+  }
+
+  runtimeDiagnostics?.clear();
+  pseintOutputChannel.clear();
+  pseintOutputChannel.show(true);
+  pseintOutputChannel.appendLine(
+    "═══ Ejecutando: " + path.basename(document.fileName) + " ═══\n"
+  );
+
+  const source = document.getText();
+  const io = new VSCodeIO(pseintOutputChannel);
+
+  try {
+    await interpretSource(source, io);
+    pseintOutputChannel.appendLine("\n═══ Ejecución completada ═══");
+  } catch (error) {
+    if (error instanceof PSeIntError) {
+      pseintOutputChannel.appendLine(`\n❌ ${error.message}`);
+      if (runtimeDiagnostics) {
+        const range = new vscode.Range(error.line - 1, 0, error.line - 1, 1000);
+        runtimeDiagnostics.set(document.uri, [
+          new vscode.Diagnostic(range, error.message, vscode.DiagnosticSeverity.Error),
+        ]);
+      }
+    } else {
+      pseintOutputChannel.appendLine(`\n❌ Error inesperado: ${error}`);
+    }
   }
 }
 
@@ -267,15 +325,24 @@ export function activate(context: vscode.ExtensionContext) {
   const diagnosticCollection =
     vscode.languages.createDiagnosticCollection("pseint");
 
+  runtimeDiagnostics = vscode.languages.createDiagnosticCollection("pseint-runtime");
+  context.subscriptions.push(runtimeDiagnostics);
+
   context.subscriptions.push(
     vscode.commands.registerCommand("pseint.run", (uri?: vscode.Uri) => {
-      runPseintFile(uri);
+      return runPseintFile(uri);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("pseint.runInterpreter", (uri?: vscode.Uri) => {
+      return runWithInterpreter(uri);
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("pseint.runSelection", () => {
-      vscode.window.showInformationMessage(
+      return vscode.window.showInformationMessage(
         "Ejecutar selección aún no implementado."
       );
     })
