@@ -110,9 +110,11 @@ FinSubProceso
 Detalles:
 
 - Las funciones pueden declararse antes o después de `Proceso/FinProceso`.
-- `Por Valor` copia el argumento (default). `Por Referencia` permite mutar variables o elementos de arreglo del caller.
+- `Por Valor` copia el argumento (default). `Por Referencia` permite mutar variables, elementos de arreglo, o **arreglos completos** (1D, 2D, N-D) del caller.
 - `Retornar [expr];` permite salida temprana. En `Funcion`, asigna el valor a la variable de retorno.
+- En `Funcion` sin `Como Tipo` declarado, el tipo del retorno es **latente**: se infiere de la primera asignación al retVar (Cadena, Logico o Real). Si nunca se asigna, retorna `0` por compatibilidad.
 - Profundidad máxima de llamadas: 500 (suficiente para recursión razonable).
+- El límite de iteraciones (1.000.000) es por frame de llamada, no global: una función con su propio bucle no agota el contador del caller.
 
 ### Arreglos N-dimensionales (matrices y cubos)
 

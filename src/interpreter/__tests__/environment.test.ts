@@ -98,7 +98,12 @@ describe("Environment - RefCell to array slot", () => {
     expect(() => env.refToArraySlot("arr", [10], 1)).toThrow(PSeIntError);
   });
 
-  it("RefCell sobrevive a re-Dimension (captura por (frame, name, indices), no por referencia directa al ArrayData)", () => {
+  it("RefCell captura por (frame, name, indices), no por referencia directa al ArrayData", () => {
+    // Tras M2 ya no es posible re-dimensionar el mismo arreglo en runtime,
+    // pero la indirección de la RefCell sigue siendo importante: lee desde
+    // frame.getArrayData(name) en cada acceso. Este test mantiene la
+    // semántica de "no captura ArrayData por referencia directa" usando
+    // un nombre distinto para el segundo arreglo.
     const env = new Environment();
     env.define("arr", "Entero");
     env.dimensionArray("arr", [3], 1);
@@ -106,13 +111,26 @@ describe("Environment - RefCell to array slot", () => {
 
     const ref = env.refToArraySlot("arr", [1], 1);
     expect(ref.get()).toBe(100);
-
-    // Re-dimensionar el mismo arreglo: reemplaza el ArrayData en el Map.
-    env.dimensionArray("arr", [5], 1);
-    // El ref debe leer desde el ArrayData NUEVO, no desde el viejo (que tenía 100).
-    expect(ref.get()).toBe(0);
     ref.set(42, 1);
     expect(env.getArray("arr", [1], 1)).toBe(42);
+  });
+
+  it("redimensionar un arreglo ya definido lanza error en español (M2)", () => {
+    const env = new Environment();
+    env.define("arr", "Entero");
+    env.dimensionArray("arr", [3], 1);
+    expect(() => env.dimensionArray("arr", [5], 1)).toThrow(
+      /Arreglo 'arr' ya está definido/
+    );
+  });
+
+  it("redimensionar es case-insensitive (M2)", () => {
+    const env = new Environment();
+    env.define("arr", "Entero");
+    env.dimensionArray("arr", [3], 1);
+    expect(() => env.dimensionArray("ARR", [5], 1)).toThrow(
+      /ya está definido/
+    );
   });
 });
 

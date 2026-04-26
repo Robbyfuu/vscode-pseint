@@ -6,7 +6,13 @@ import {
   normalizePSeIntType,
 } from "./environment";
 import { BUILTINS } from "./builtins";
-import type { PSeIntValue, PSeIntType, RefCell } from "./environment";
+import type {
+  PSeIntValue,
+  PSeIntType,
+  RefCell,
+  ArrayData,
+  Frame,
+} from "./environment";
 import type {
   ProgramNode,
   StatementNode,
@@ -27,9 +33,15 @@ export interface InterpreterIO {
 /**
  * Internal control-flow signal used by Retornar to early-exit a user-defined
  * subprogram. NOT a PSeIntError — must be caught only by callUserFn.
+ *
+ * Extiende Error para asegurar interoperabilidad con motores estrictos y
+ * herramientas de stack-trace que esperan que cualquier `throw` sea Error.
  */
-class ReturnSignal {
-  // marker class
+class ReturnSignal extends Error {
+  constructor() {
+    super("ReturnSignal");
+    this.name = "ReturnSignal";
+  }
 }
 
 const MAX_CALL_DEPTH = 500;
@@ -447,13 +459,17 @@ export class Interpreter {
 
     // 3. Resolve args in CALLER's frame BEFORE pushing.
     //    For Por Valor: eval to a value.
-    //    For Por Referencia: build a RefCell against the caller's slot.
+    //    For Por Referencia: build a RefCell against the caller's slot, OR
+    //      an arrayAlias if the arg is an identifier pointing to an array.
     interface ResolvedArg {
       param: ParamSpec;
       value?: PSeIntValue;
       ref?: RefCell;
+      /** H3: alias compartido al ArrayData del caller. */
+      arrayAlias?: { data: ArrayData };
     }
     const resolved: ResolvedArg[] = [];
+    const callerFrame: Frame = this.env.current();
     for (let i = 0; i < decl.params.length; i++) {
       const param = decl.params[i];
       const argExpr = argExprs[i];
@@ -461,8 +477,21 @@ export class Interpreter {
       if (param.mode === "ref") {
         // Must be Identifier or ArrayAccess
         if (argExpr.kind === "identifier") {
-          const ref = this.env.refToVariable(argExpr.name, argExpr.line);
-          resolved.push({ param, ref });
+          // H3: si el identificador apunta a un arreglo, hacemos alias del
+          // ArrayData completo (no es una RefCell escalar).
+          if (callerFrame.isArray(argExpr.name)) {
+            const data = callerFrame.getArrayData(argExpr.name);
+            if (!data) {
+              throw new PSeIntError(
+                `Arreglo '${argExpr.name}' no definido`,
+                argExpr.line
+              );
+            }
+            resolved.push({ param, arrayAlias: { data } });
+          } else {
+            const ref = this.env.refToVariable(argExpr.name, argExpr.line);
+            resolved.push({ param, ref });
+          }
         } else if (argExpr.kind === "array_access") {
           const indices: number[] = [];
           for (const idxExpr of argExpr.indices) {
@@ -489,13 +518,23 @@ export class Interpreter {
 
     // 4. Push new frame (increment depth INSIDE try-catch boundary so leaks
     // are impossible if pushFrame ever throws in the future).
+    //
+    // M4: el contador de iteraciones es por-frame de llamada. Si lo
+    // mantuviéramos global, un caller con un loop largo + un callee con su
+    // propio loop largo podrían sumar y romper el límite a pesar de que
+    // ningún cuerpo individual sea infinito.
+    const savedIterationCount = this.iterationCount;
+    this.iterationCount = 0;
     const frame = this.env.pushFrame();
     this.callDepth++;
 
     try {
       // 5. Bind params in the new frame
       for (const r of resolved) {
-        if (r.ref) {
+        if (r.arrayAlias) {
+          // H3: arreglo completo Por Referencia. ArrayData compartido.
+          frame.aliasArray(r.param.name, r.arrayAlias.data);
+        } else if (r.ref) {
           frame.bindRef(r.param.name, r.ref);
         } else {
           // Por Valor: define + set. Type: explicit or inferred.
@@ -506,15 +545,20 @@ export class Interpreter {
 
       // 6. Track retVar
       if (decl.returnVar !== null) {
-        const retType: PSeIntType = decl.returnType
-          ? normalizePSeIntType(decl.returnType)
-          : "Real";
-        frame.defineWithValue(
-          decl.returnVar,
-          retType,
-          defaultValue(retType),
-          line
-        );
+        if (decl.returnType) {
+          // Tipo explícito: pre-definir con default del tipo.
+          const retType = normalizePSeIntType(decl.returnType);
+          frame.defineWithValue(
+            decl.returnVar,
+            retType,
+            defaultValue(retType),
+            line
+          );
+        } else {
+          // M3: sin `Como Tipo` → tipado latente, se infiere en la primera
+          // asignación. Si nunca se asigna, get() devuelve 0 (Real default).
+          frame.defineUntyped(decl.returnVar);
+        }
         frame.retVar = decl.returnVar;
       }
 
@@ -537,7 +581,8 @@ export class Interpreter {
 
       return result;
     } finally {
-      // 9. Pop frame, decrement depth
+      // 9. Restore caller's iteration count BEFORE pop+decrement.
+      this.iterationCount = savedIterationCount;
       this.env.popFrame();
       this.callDepth--;
     }
