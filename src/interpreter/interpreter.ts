@@ -54,6 +54,9 @@ export class Interpreter {
   async execute(program: ProgramNode): Promise<void> {
     this.iterationCount = 0;
     this.callDepth = 0;
+    // Reset registry so re-running the same Interpreter instance doesn't
+    // throw "Subprograma ya definido" on the second call.
+    this.registry = new SubProgRegistry();
 
     // Pre-pass: register all subprograms BEFORE executing the main body.
     // Allows forward refs and mutual recursion.
@@ -265,11 +268,18 @@ export class Interpreter {
       }
 
       case "return": {
+        if (this.callDepth === 0) {
+          throw new PSeIntError(
+            "'Retornar' solo es válido dentro de una Funcion o SubProceso",
+            stmt.line
+          );
+        }
+        const frame = this.env.current();
         if (stmt.value !== null) {
-          // Evaluate before pushing the signal — we need to write to retVar
-          const val = await this.evaluateExpression(stmt.value);
-          const frame = this.env.current();
-          if (frame.retVar) {
+          // Funcion: assign to retVar before signaling. SubProc with no
+          // retVar simply discards the value (or could error — design TBD).
+          if (frame.retVar !== null) {
+            const val = await this.evaluateExpression(stmt.value);
             frame.set(frame.retVar, val, stmt.line);
           }
         }
@@ -435,9 +445,10 @@ export class Interpreter {
       }
     }
 
-    // 4. Push new frame
-    this.callDepth++;
+    // 4. Push new frame (increment depth INSIDE try-catch boundary so leaks
+    // are impossible if pushFrame ever throws in the future).
     const frame = this.env.pushFrame();
+    this.callDepth++;
 
     try {
       // 5. Bind params in the new frame

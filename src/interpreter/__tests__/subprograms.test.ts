@@ -300,3 +300,48 @@ FinProceso
     expect(io.getFullOutput()).toBe("14\n");
   });
 });
+
+describe("Retornar fuera de Funcion/SubProceso", () => {
+  it("Retornar en main body emite error PSeInt en español, no crash", async () => {
+    const source = `
+Proceso Main
+  Retornar 5;
+FinProceso
+`;
+    await expect(run(source)).rejects.toThrow(
+      /Retornar.*solo es válido dentro de una Funcion o SubProceso/
+    );
+  });
+});
+
+describe("Reuso de Interpreter (registry reset)", () => {
+  it("ejecutar dos veces el mismo programa no tira 'Subprograma ya definido'", async () => {
+    const { Interpreter } = await import("../interpreter");
+    const { Lexer } = await import("../lexer");
+    const { Parser } = await import("../parser");
+    const source = `
+Proceso Main
+  Escribir doble(3);
+FinProceso
+
+Funcion r <- doble(x)
+  r <- x * 2;
+FinFuncion
+`;
+    const tokens = new Lexer(source).tokenize();
+    const program = new Parser(tokens).parse();
+
+    let captured = "";
+    const io = {
+      write: (t: string) => {
+        captured += t;
+      },
+      read: async () => undefined,
+    };
+
+    const interp = new Interpreter(io);
+    await interp.execute(program);
+    await interp.execute(program); // second run must not throw
+    expect(captured).toBe("6\n6\n");
+  });
+});
