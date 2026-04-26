@@ -192,6 +192,22 @@ export interface DimensionNode {
   line: number;
 }
 
+export interface ClearScreenNode {
+  kind: "clear_screen";
+  line: number;
+}
+
+export interface WaitKeyNode {
+  kind: "wait_key";
+  line: number;
+}
+
+export interface WaitSecondsNode {
+  kind: "wait_seconds";
+  seconds: ExpressionNode;
+  line: number;
+}
+
 // ── Union Types ─────────────────────────────────────────────────────
 
 export type ExpressionNode =
@@ -217,4 +233,7 @@ export type StatementNode =
   | SwitchNode
   | DimensionNode
   | CallStatementNode
-  | ReturnNode;
+  | ReturnNode
+  | ClearScreenNode
+  | WaitKeyNode
+  | WaitSecondsNode;

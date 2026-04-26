@@ -143,6 +143,107 @@ const builtinEntries: Array<[string[], BuiltinFn]> = [
     },
   ],
 
+  // ── Trigonometría (radianes) ────────────────────────────────────
+  [
+    ["sen"],
+    (args, line) => {
+      expectArgs("Sen", args, 1, line);
+      return Math.sin(toNum("Sen", args[0], line));
+    },
+  ],
+  [
+    ["cos"],
+    (args, line) => {
+      expectArgs("Cos", args, 1, line);
+      return Math.cos(toNum("Cos", args[0], line));
+    },
+  ],
+  [
+    ["tan"],
+    (args, line) => {
+      expectArgs("Tan", args, 1, line);
+      return Math.tan(toNum("Tan", args[0], line));
+    },
+  ],
+  [
+    ["asen"],
+    (args, line) => {
+      expectArgs("Asen", args, 1, line);
+      const x = toNum("Asen", args[0], line);
+      if (x < -1 || x > 1) {
+        throw new PSeIntError(
+          "Asen: el argumento debe estar en [-1, 1]",
+          line
+        );
+      }
+      return Math.asin(x);
+    },
+  ],
+  [
+    ["acos"],
+    (args, line) => {
+      expectArgs("Acos", args, 1, line);
+      const x = toNum("Acos", args[0], line);
+      if (x < -1 || x > 1) {
+        throw new PSeIntError(
+          "Acos: el argumento debe estar en [-1, 1]",
+          line
+        );
+      }
+      return Math.acos(x);
+    },
+  ],
+  [
+    ["atan"],
+    (args, line) => {
+      expectArgs("Atan", args, 1, line);
+      return Math.atan(toNum("Atan", args[0], line));
+    },
+  ],
+
+  // ── Logaritmos y exponencial ────────────────────────────────────
+  [
+    ["ln"],
+    (args, line) => {
+      expectArgs("Ln", args, 1, line);
+      const x = toNum("Ln", args[0], line);
+      if (x <= 0) {
+        throw new PSeIntError("Ln: el argumento debe ser positivo", line);
+      }
+      return Math.log(x);
+    },
+  ],
+  [
+    ["exp"],
+    (args, line) => {
+      expectArgs("Exp", args, 1, line);
+      return Math.exp(toNum("Exp", args[0], line));
+    },
+  ],
+  [
+    ["log"],
+    (args, line) => {
+      expectArgs("Log", args, 1, line);
+      const x = toNum("Log", args[0], line);
+      if (x <= 0) {
+        throw new PSeIntError("Log: el argumento debe ser positivo", line);
+      }
+      return Math.log10(x);
+    },
+  ],
+
+  // ── Potencia (alias de ^) ───────────────────────────────────────
+  [
+    ["pot"],
+    (args, line) => {
+      expectArgs("Pot", args, 2, line);
+      return Math.pow(
+        toNum("Pot", args[0], line),
+        toNum("Pot", args[1], line)
+      );
+    },
+  ],
+
   // ── Random ──────────────────────────────────────────────────────
   [
     ["azar"],

@@ -19,4 +19,15 @@ export class VSCodeIO implements InterpreterIO {
       ignoreFocusOut: true,
     });
   }
+
+  clear(): void {
+    this.outputChannel.clear();
+  }
+
+  async waitForKey(): Promise<void> {
+    await vscode.window.showInputBox({
+      prompt: "Presiona Enter para continuar...",
+      ignoreFocusOut: true,
+    });
+  }
 }

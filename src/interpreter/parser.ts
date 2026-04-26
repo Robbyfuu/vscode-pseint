@@ -23,6 +23,9 @@ import type {
   ParamSpec,
   CallStatementNode,
   ReturnNode,
+  ClearScreenNode,
+  WaitKeyNode,
+  WaitSecondsNode,
 } from "./ast";
 
 export class Parser {
@@ -132,11 +135,37 @@ export class Parser {
         return this.parseDimension();
       case TokenType.RETORNAR:
         return this.parseReturn();
+      case TokenType.LIMPIAR_PANTALLA:
+        return this.parseClearScreen();
+      case TokenType.ESPERAR_TECLA:
+        return this.parseWaitKey();
+      case TokenType.ESPERAR:
+        return this.parseWaitSeconds();
       case TokenType.IDENTIFIER:
         return this.parseAssignOrArrayAssign();
       default:
         throw this.error(`Sentencia inesperada '${token.lexeme}'`);
     }
+  }
+
+  private parseClearScreen(): ClearScreenNode {
+    const tok = this.advance(); // consume LIMPIAR_PANTALLA
+    this.consumeOptionalSemicolon();
+    return { kind: "clear_screen", line: tok.line };
+  }
+
+  private parseWaitKey(): WaitKeyNode {
+    const tok = this.advance(); // consume ESPERAR_TECLA
+    this.consumeOptionalSemicolon();
+    return { kind: "wait_key", line: tok.line };
+  }
+
+  private parseWaitSeconds(): WaitSecondsNode {
+    const tok = this.advance(); // consume ESPERAR
+    const seconds = this.parseExpression();
+    this.consume(TokenType.SEGUNDOS, "Se esperaba 'Segundos'");
+    this.consumeOptionalSemicolon();
+    return { kind: "wait_seconds", seconds, line: tok.line };
   }
 
   private parseDefine(): DefineNode {

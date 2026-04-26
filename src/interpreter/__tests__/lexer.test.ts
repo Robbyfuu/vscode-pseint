@@ -381,6 +381,48 @@ describe("Lexer", () => {
     });
   });
 
+  describe("statements extendidas (Limpiar/Borrar Pantalla, Esperar)", () => {
+    it("Limpiar Pantalla produce LIMPIAR_PANTALLA", () => {
+      const types = tokenTypes("Limpiar Pantalla");
+      expect(types).toEqual([TokenType.LIMPIAR_PANTALLA, TokenType.EOF]);
+    });
+
+    it("Borrar Pantalla produce LIMPIAR_PANTALLA (alias)", () => {
+      const types = tokenTypes("Borrar Pantalla");
+      expect(types).toEqual([TokenType.LIMPIAR_PANTALLA, TokenType.EOF]);
+    });
+
+    it("Limpiar solo cae a IDENTIFIER", () => {
+      const types = tokenTypes("Limpiar");
+      expect(types[0]).toBe(TokenType.IDENTIFIER);
+    });
+
+    it("Borrar solo cae a IDENTIFIER", () => {
+      const types = tokenTypes("Borrar");
+      expect(types[0]).toBe(TokenType.IDENTIFIER);
+    });
+
+    it("Esperar Tecla produce ESPERAR_TECLA", () => {
+      const types = tokenTypes("Esperar Tecla");
+      expect(types).toEqual([TokenType.ESPERAR_TECLA, TokenType.EOF]);
+    });
+
+    it("Esperar solo produce ESPERAR", () => {
+      const types = tokenTypes("Esperar");
+      expect(types).toEqual([TokenType.ESPERAR, TokenType.EOF]);
+    });
+
+    it("Esperar 5 Segundos produce ESPERAR NUMBER SEGUNDOS", () => {
+      const types = tokenTypes("Esperar 5 Segundos");
+      expect(types).toEqual([
+        TokenType.ESPERAR,
+        TokenType.NUMBER,
+        TokenType.SEGUNDOS,
+        TokenType.EOF,
+      ]);
+    });
+  });
+
   describe("programa completo", () => {
     it("tokeniza un programa simple", () => {
       const source = `Proceso HolaMundo

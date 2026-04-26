@@ -74,7 +74,7 @@ Detecta errores mientras escribes:
 |-----------|--------------|
 | **Tipos** | `Entero`, `Real`, `Cadena`, `Logico` |
 | **Variables** | `Definir...Como`, asignación con `<-` |
-| **Entrada/Salida** | `Escribir`, `Escribir Sin Saltar`, `Leer` |
+| **Entrada/Salida** | `Escribir`, `Escribir Sin Saltar`, `Leer`, `Limpiar Pantalla` / `Borrar Pantalla`, `Esperar Tecla`, `Esperar N Segundos` |
 | **Condicionales** | `Si...Entonces...SiNo...FinSi` |
 | **Ciclos** | `Mientras...Hacer`, `Para...Hasta...Con Paso`, `Repetir...Hasta Que` |
 | **Selección** | `Segun...Hacer...De Otro Modo...FinSegun` |
@@ -122,6 +122,12 @@ Detalles:
 | `Abs(x)` | Valor absoluto |
 | `Trunc(x)` | Truncar a entero |
 | `Redon(x)` | Redondear |
+| `sen(x)` / `cos(x)` / `tan(x)` | Trigonométricas (radianes) |
+| `asen(x)` / `acos(x)` / `atan(x)` | Trigonométricas inversas (radianes) |
+| `ln(x)` | Logaritmo natural |
+| `exp(x)` | Exponencial natural (e^x) |
+| `log(x)` | Logaritmo base 10 |
+| `pot(b, e)` | Potencia (alias del operador `^`) |
 | `Longitud(s)` | Largo de cadena |
 | `Subcadena(s, inicio, fin)` | Extraer subcadena (base-1) |
 | `Mayusculas(s)` | Convertir a mayúsculas |
@@ -131,6 +137,8 @@ Detalles:
 | `ConvertirATexto(n)` | Número a texto |
 | `Azar(n)` | Entero aleatorio en [0, n-1] |
 | `Aleatorio(a, b)` | Entero aleatorio en [a, b] |
+
+> Constante predefinida: `pi` (Math.PI). Puedes reasignarla — al estilo PSeInt clásico.
 
 ## Atajos de teclado
 

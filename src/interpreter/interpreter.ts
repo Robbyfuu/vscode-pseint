@@ -18,6 +18,10 @@ import type {
 export interface InterpreterIO {
   write(text: string): void;
   read(prompt: string): Promise<string | undefined>;
+  /** Limpia la pantalla / output channel. Opcional: si no se implementa, Limpiar Pantalla es no-op. */
+  clear?(): void;
+  /** Bloquea hasta que el usuario presione una tecla. Opcional: si no se implementa, resuelve inmediatamente. */
+  waitForKey?(): Promise<void>;
 }
 
 /**
@@ -57,6 +61,11 @@ export class Interpreter {
     // Reset registry so re-running the same Interpreter instance doesn't
     // throw "Subprograma ya definido" on the second call.
     this.registry = new SubProgRegistry();
+
+    // Predefinir constante `pi` en el frame raíz. El usuario puede
+    // reasignarla (PSeInt clásico permite esto). Se hace ANTES de registrar
+    // subprogramas y ejecutar el body.
+    this.env.current().defineWithValue("pi", "Real", Math.PI, 0);
 
     // Pre-pass: register all subprograms BEFORE executing the main body.
     // Allows forward refs and mutual recursion.
@@ -284,6 +293,31 @@ export class Interpreter {
           }
         }
         throw new ReturnSignal();
+      }
+
+      case "clear_screen": {
+        this.io.clear?.();
+        break;
+      }
+
+      case "wait_key": {
+        await (this.io.waitForKey?.() ?? Promise.resolve());
+        break;
+      }
+
+      case "wait_seconds": {
+        const secs = this.toNumber(
+          await this.evaluateExpression(stmt.seconds),
+          stmt.line
+        );
+        if (secs < 0) {
+          throw new PSeIntError(
+            "El tiempo de espera debe ser no negativo",
+            stmt.line
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, secs * 1000));
+        break;
       }
 
       default: {

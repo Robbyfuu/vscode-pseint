@@ -26,6 +26,7 @@ const KEYWORDS: Map<string, TokenType> = new Map([
   ["finsegun", TokenType.FIN_SEGUN],
   ["dimension", TokenType.DIMENSION],
   ["dimensión", TokenType.DIMENSION],
+  ["segundos", TokenType.SEGUNDOS],
   ["funcion", TokenType.FUNCION],
   ["función", TokenType.FUNCION],
   ["finfuncion", TokenType.FIN_FUNCION],
@@ -329,6 +330,37 @@ export class Lexer {
         return;
       }
       this.addToken(TokenType.ESCRIBIR);
+      return;
+    }
+
+    // Check for "limpiar" → peek for "pantalla"
+    if (lower === "limpiar") {
+      if (this.tryCompoundWord("pantalla")) {
+        this.addToken(TokenType.LIMPIAR_PANTALLA);
+        return;
+      }
+      // "limpiar" solo cae a IDENTIFIER (puede ser nombre de variable)
+      this.addToken(TokenType.IDENTIFIER);
+      return;
+    }
+
+    // Check for "borrar" → peek for "pantalla" (alias de Limpiar Pantalla)
+    if (lower === "borrar") {
+      if (this.tryCompoundWord("pantalla")) {
+        this.addToken(TokenType.LIMPIAR_PANTALLA);
+        return;
+      }
+      this.addToken(TokenType.IDENTIFIER);
+      return;
+    }
+
+    // Check for "esperar" → peek for "tecla" (sino, ESPERAR para "Esperar N Segundos")
+    if (lower === "esperar") {
+      if (this.tryCompoundWord("tecla")) {
+        this.addToken(TokenType.ESPERAR_TECLA);
+        return;
+      }
+      this.addToken(TokenType.ESPERAR);
       return;
     }
 

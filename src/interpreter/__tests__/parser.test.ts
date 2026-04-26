@@ -22,6 +22,9 @@ import type {
   SubProcDeclNode,
   CallStatementNode,
   ReturnNode,
+  ClearScreenNode,
+  WaitKeyNode,
+  WaitSecondsNode,
 } from "../ast";
 
 function parse(source: string): ProgramNode {
@@ -712,6 +715,79 @@ describe("Parser", () => {
       expect(params[0].mode).toBe("value");
       expect(params[1].mode).toBe("ref");
       expect(params[2].mode).toBe("value");
+    });
+  });
+
+  describe("statements extendidas (Limpiar Pantalla / Esperar)", () => {
+    it("parsea Limpiar Pantalla como ClearScreenNode", () => {
+      const ast = parse(`
+        Proceso Test
+          Limpiar Pantalla;
+        FinProceso
+      `);
+
+      expect(ast.body).toHaveLength(1);
+      const node = ast.body[0] as ClearScreenNode;
+      expect(node.kind).toBe("clear_screen");
+    });
+
+    it("parsea Borrar Pantalla como ClearScreenNode (alias)", () => {
+      const ast = parse(`
+        Proceso Test
+          Borrar Pantalla
+        FinProceso
+      `);
+
+      const node = ast.body[0] as ClearScreenNode;
+      expect(node.kind).toBe("clear_screen");
+    });
+
+    it("parsea Esperar Tecla como WaitKeyNode (sin punto y coma)", () => {
+      const ast = parse(`
+        Proceso Test
+          Esperar Tecla
+        FinProceso
+      `);
+
+      const node = ast.body[0] as WaitKeyNode;
+      expect(node.kind).toBe("wait_key");
+    });
+
+    it("parsea Esperar 5 Segundos como WaitSecondsNode", () => {
+      const ast = parse(`
+        Proceso Test
+          Esperar 5 Segundos;
+        FinProceso
+      `);
+
+      const node = ast.body[0] as WaitSecondsNode;
+      expect(node.kind).toBe("wait_seconds");
+      expect(node.seconds.kind).toBe("number_literal");
+      if (node.seconds.kind === "number_literal") {
+        expect(node.seconds.value).toBe(5);
+      }
+    });
+
+    it("parsea Esperar con expresión arbitraria Segundos", () => {
+      const ast = parse(`
+        Proceso Test
+          Esperar 1 + 2 Segundos
+        FinProceso
+      `);
+
+      const node = ast.body[0] as WaitSecondsNode;
+      expect(node.kind).toBe("wait_seconds");
+      expect(node.seconds.kind).toBe("binary_expression");
+    });
+
+    it("Esperar sin Segundos lanza error de parseo", () => {
+      expect(() =>
+        parse(`
+          Proceso Test
+            Esperar 5;
+          FinProceso
+        `)
+      ).toThrow(PSeIntError);
     });
   });
 });
