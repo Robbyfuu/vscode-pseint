@@ -514,13 +514,9 @@ FinSubProceso
     expect(io.getFullOutput()).toBe("12345\n");
   });
 
-  it("arreglo Por Valor (sin Por Referencia) NO muta el caller", async () => {
-    // El parser/interp puede aceptar identifier-array como "valor" pero
-    // semánticamente NO debe haber alias sin Por Referencia explícito.
-    // Este test es defensivo: verifica que pasar un arreglo sin Por Ref
-    // no crea alias accidental. Si el bind de identifier-array por valor
-    // no es soportado, el test puede fallar con error de tipos en su lugar
-    // — en ese caso lo ajustamos.
+  it("arreglo Por Referencia muta el caller (alias activo)", async () => {
+    // Verifica que pasar un arreglo Por Referencia comparte el ArrayData
+    // con el callee — mutaciones internas se reflejan en el caller.
     const source = `
 Proceso Main
   Dimension a[3];
@@ -535,8 +531,6 @@ SubProceso intentar(arr Por Referencia)
   arr[1] <- 100;
 FinSubProceso
 `;
-    // Este test verifica el flujo positivo Por Referencia (mismo aliasing).
-    // El nombre quedó pero verificamos que SI muta cuando es Por Ref:
     const io = await run(source);
     expect(io.getFullOutput()).toBe("100 8 9\n");
   });
