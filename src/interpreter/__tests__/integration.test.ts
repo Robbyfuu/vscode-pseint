@@ -164,6 +164,109 @@ FinProceso
     expect(io.getFullOutput()).toBe("4\n7\n3\n");
   });
 
+  it("factorial recursivo con Funcion: factorial(5) = 120", async () => {
+    const source = `
+Proceso Main
+  Escribir factorial(5);
+FinProceso
+
+Funcion r <- factorial(n)
+  Si n <= 1 Entonces
+    r <- 1;
+  SiNo
+    r <- n * factorial(n - 1);
+  FinSi
+FinFuncion
+`;
+    const io = await run(source);
+    expect(io.getFullOutput()).toBe("120\n");
+  });
+
+  it("fibonacci recursivo con Funcion: fibonacci(10) = 55", async () => {
+    const source = `
+Proceso Main
+  Escribir fib(10);
+FinProceso
+
+Funcion r <- fib(n)
+  Si n < 2 Entonces
+    r <- n;
+  SiNo
+    r <- fib(n - 1) + fib(n - 2);
+  FinSi
+FinFuncion
+`;
+    const io = await run(source);
+    expect(io.getFullOutput()).toBe("55\n");
+  });
+
+  it("recursión mutua esPar/esImpar", async () => {
+    const source = `
+Proceso Main
+  Si esPar(10) Entonces
+    Escribir "10 par";
+  FinSi
+  Si esImpar(7) Entonces
+    Escribir "7 impar";
+  FinSi
+FinProceso
+
+Funcion r <- esPar(n)
+  Si n = 0 Entonces
+    r <- Verdadero;
+  SiNo
+    r <- esImpar(n - 1);
+  FinSi
+FinFuncion
+
+Funcion r <- esImpar(n)
+  Si n = 0 Entonces
+    r <- Falso;
+  SiNo
+    r <- esPar(n - 1);
+  FinSi
+FinFuncion
+`;
+    const io = await run(source);
+    expect(io.getFullOutput()).toBe("10 par\n7 impar\n");
+  });
+
+  it("ordenamiento burbuja con SubProceso swap Por Referencia", async () => {
+    const source = `
+Proceso Main
+  Definir i, j Como Entero;
+  Dimension a[5];
+  a[1] <- 5;
+  a[2] <- 2;
+  a[3] <- 4;
+  a[4] <- 1;
+  a[5] <- 3;
+
+  Para i <- 1 Hasta 4 Hacer
+    Para j <- 1 Hasta 5 - i Hacer
+      Si a[j] > a[j + 1] Entonces
+        swap(a[j], a[j + 1]);
+      FinSi
+    FinPara
+  FinPara
+
+  Para i <- 1 Hasta 5 Hacer
+    EscribirSinSaltar a[i], " ";
+  FinPara
+  Escribir "";
+FinProceso
+
+SubProceso swap(uno Por Referencia, dos Por Referencia)
+  Definir t Como Entero;
+  t <- uno;
+  uno <- dos;
+  dos <- t;
+FinSubProceso
+`;
+    const io = await run(source);
+    expect(io.getFullOutput()).toBe("1 2 3 4 5 \n");
+  });
+
   it("Programa completo: nota de estudiante Aprobado/Reprobado", async () => {
     const source = `
 Proceso Calificacion

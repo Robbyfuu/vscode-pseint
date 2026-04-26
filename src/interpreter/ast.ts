@@ -68,6 +68,39 @@ export interface ProgramNode {
   kind: "program";
   name: string;
   body: StatementNode[];
+  subprograms: SubProcDeclNode[];
+  line: number;
+}
+
+export interface ParamSpec {
+  name: string;
+  mode: "value" | "ref";
+  /** Optional explicit type ("entero", "real", "cadena", "logico", "caracter") */
+  type?: string;
+}
+
+export interface SubProcDeclNode {
+  kind: "subproc_decl";
+  name: string;
+  /** Name of the return variable (Funcion). null if no return (SubProceso without return). */
+  returnVar: string | null;
+  /** Optional explicit return type, when declared with "Como X" */
+  returnType?: string;
+  params: ParamSpec[];
+  body: StatementNode[];
+  line: number;
+}
+
+export interface CallStatementNode {
+  kind: "call_stmt";
+  name: string;
+  args: ExpressionNode[];
+  line: number;
+}
+
+export interface ReturnNode {
+  kind: "return";
+  value: ExpressionNode | null;
   line: number;
 }
 
@@ -182,4 +215,6 @@ export type StatementNode =
   | ForNode
   | RepeatNode
   | SwitchNode
-  | DimensionNode;
+  | DimensionNode
+  | CallStatementNode
+  | ReturnNode;

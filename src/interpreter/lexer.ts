@@ -26,6 +26,13 @@ const KEYWORDS: Map<string, TokenType> = new Map([
   ["finsegun", TokenType.FIN_SEGUN],
   ["dimension", TokenType.DIMENSION],
   ["dimensión", TokenType.DIMENSION],
+  ["funcion", TokenType.FUNCION],
+  ["función", TokenType.FUNCION],
+  ["finfuncion", TokenType.FIN_FUNCION],
+  ["finfunción", TokenType.FIN_FUNCION],
+  ["subproceso", TokenType.SUBPROCESO],
+  ["finsubproceso", TokenType.FIN_SUBPROCESO],
+  ["retornar", TokenType.RETORNAR],
   ["entero", TokenType.TIPO_ENTERO],
   ["real", TokenType.TIPO_REAL],
   ["cadena", TokenType.TIPO_CADENA],
@@ -47,15 +54,7 @@ const KEYWORDS: Map<string, TokenType> = new Map([
 ]);
 
 /** Keywords that map to IDENTIFIER (pass-through, out of scope) */
-const PASSTHROUGH_KEYWORDS: Set<string> = new Set([
-  "retornar",
-  "funcion",
-  "función",
-  "finfuncion",
-  "finfunción",
-  "subproceso",
-  "finsubproceso",
-]);
+const PASSTHROUGH_KEYWORDS: Set<string> = new Set([]);
 
 /** Compound "Fin X" mappings (second word lowercase → token type) */
 const FIN_COMPOUNDS: Map<string, TokenType> = new Map([
@@ -65,6 +64,9 @@ const FIN_COMPOUNDS: Map<string, TokenType> = new Map([
   ["mientras", TokenType.FIN_MIENTRAS],
   ["para", TokenType.FIN_PARA],
   ["segun", TokenType.FIN_SEGUN],
+  ["funcion", TokenType.FIN_FUNCION],
+  ["función", TokenType.FIN_FUNCION],
+  ["subproceso", TokenType.FIN_SUBPROCESO],
 ]);
 
 function isDigit(c: string): boolean {
@@ -347,6 +349,21 @@ export class Lexer {
         return;
       }
       // "con" alone is an identifier
+      this.addToken(TokenType.IDENTIFIER);
+      return;
+    }
+
+    // Check for "por" → peek for "valor" or "referencia"
+    if (lower === "por") {
+      if (this.tryCompoundWord("valor")) {
+        this.addToken(TokenType.POR_VALOR);
+        return;
+      }
+      if (this.tryCompoundWord("referencia")) {
+        this.addToken(TokenType.POR_REFERENCIA);
+        return;
+      }
+      // "por" alone is just an identifier
       this.addToken(TokenType.IDENTIFIER);
       return;
     }

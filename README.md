@@ -81,6 +81,39 @@ Detecta errores mientras escribes:
 | **Arreglos** | `Dimension` (1D, indexación base-1) |
 | **Operadores** | `+`, `-`, `*`, `/`, `^`, `MOD`, `=`, `<>`, `<`, `>`, `Y`, `O`, `NO` |
 
+### Funciones y SubProcesos definidos por el usuario
+
+El intérprete soporta `Funcion` (con valor de retorno) y `SubProceso` (sin retorno), incluyendo recursión, parámetros `Por Valor` (default) y `Por Referencia`, y `Retornar` para salida temprana.
+
+```
+Proceso Main
+  Definir x Como Entero;
+  x <- 5;
+  Escribir "factorial(", x, ") = ", factorial(x);
+  duplicar(x);
+  Escribir "x duplicado: ", x;
+FinProceso
+
+Funcion r <- factorial(n)
+  Si n <= 1 Entonces
+    r <- 1;
+  SiNo
+    r <- n * factorial(n - 1);
+  FinSi
+FinFuncion
+
+SubProceso duplicar(v Por Referencia)
+  v <- v * 2;
+FinSubProceso
+```
+
+Detalles:
+
+- Las funciones pueden declararse antes o después de `Proceso/FinProceso`.
+- `Por Valor` copia el argumento (default). `Por Referencia` permite mutar variables o elementos de arreglo del caller.
+- `Retornar [expr];` permite salida temprana. En `Funcion`, asigna el valor a la variable de retorno.
+- Profundidad máxima de llamadas: 500 (suficiente para recursión razonable).
+
 ### Funciones incorporadas
 
 | Función | Descripción |
@@ -145,7 +178,6 @@ La extensión incluye programas de ejemplo en la carpeta `examples/`:
 
 El intérprete embebido cubre las instrucciones más usadas en cursos introductorios. Aún **no soporta**:
 
-- Funciones y SubProcesos definidos por el usuario
 - Arreglos multidimensionales
 - Funciones trigonométricas (SEN, COS, TAN, LN, EXP)
 - Depuración paso a paso
@@ -160,7 +192,7 @@ git clone https://github.com/Robbyfuu/vscode-pseint.git
 cd vscode-pseint
 pnpm install
 pnpm run watch    # compilación en modo watch
-pnpm test         # correr tests (141 tests)
+pnpm test         # correr tests (201 tests)
 ```
 
 Presiona `F5` en VS Code para abrir una ventana de desarrollo con la extensión cargada.

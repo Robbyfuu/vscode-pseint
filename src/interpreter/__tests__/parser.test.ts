@@ -19,6 +19,9 @@ import type {
   ArrayAssignNode,
   FunctionCallNode,
   NumberLiteralNode,
+  SubProcDeclNode,
+  CallStatementNode,
+  ReturnNode,
 } from "../ast";
 
 function parse(source: string): ProgramNode {
@@ -463,6 +466,252 @@ describe("Parser", () => {
       expect(call.kind).toBe("function_call");
       expect(call.name).toBe("AZAR");
       expect(call.args).toHaveLength(2);
+    });
+  });
+
+  describe("declaración de SubProceso (sin retorno)", () => {
+    it("parsea SubProceso simple sin retorno y sin parámetros", () => {
+      const ast = parse(`
+        Proceso Main
+          saludar();
+        FinProceso
+
+        SubProceso saludar()
+          Escribir "Hola";
+        FinSubProceso
+      `);
+
+      expect(ast.subprograms).toHaveLength(1);
+      const sp = ast.subprograms[0] as SubProcDeclNode;
+      expect(sp.kind).toBe("subproc_decl");
+      expect(sp.name).toBe("saludar");
+      expect(sp.returnVar).toBeNull();
+      expect(sp.params).toHaveLength(0);
+      expect(sp.body).toHaveLength(1);
+    });
+
+    it("parsea SubProceso con parámetro Por Valor implícito", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        SubProceso saludar(nombre)
+          Escribir "Hola ", nombre;
+        FinSubProceso
+      `);
+
+      const sp = ast.subprograms[0];
+      expect(sp.params).toHaveLength(1);
+      expect(sp.params[0].name).toBe("nombre");
+      expect(sp.params[0].mode).toBe("value");
+    });
+  });
+
+  describe("declaración de Funcion (con retorno)", () => {
+    it("parsea Funcion con retVar y un parámetro", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        Funcion res <- doble(x)
+          res <- x * 2;
+        FinFuncion
+      `);
+
+      expect(ast.subprograms).toHaveLength(1);
+      const fn = ast.subprograms[0];
+      expect(fn.name).toBe("doble");
+      expect(fn.returnVar).toBe("res");
+      expect(fn.params).toHaveLength(1);
+      expect(fn.params[0].name).toBe("x");
+      expect(fn.params[0].mode).toBe("value");
+    });
+
+    it("parsea Funcion con tipo declarado en parámetro y retorno", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        Funcion r <- suma(a Por Valor, b Por Valor) Como Real
+          r <- a + b;
+        FinFuncion
+      `);
+
+      const fn = ast.subprograms[0];
+      expect(fn.params).toHaveLength(2);
+      expect(fn.params[0].mode).toBe("value");
+      expect(fn.params[1].mode).toBe("value");
+    });
+  });
+
+  describe("subprogramas: top-level fan-out", () => {
+    it("admite SubProceso ANTES de Proceso", () => {
+      const ast = parse(`
+        SubProceso saludar()
+          Escribir "Hola";
+        FinSubProceso
+
+        Proceso Main
+          saludar();
+        FinProceso
+      `);
+
+      expect(ast.subprograms).toHaveLength(1);
+      expect(ast.subprograms[0].name).toBe("saludar");
+      expect(ast.body).toHaveLength(1);
+    });
+
+    it("admite SubProcesos antes Y después del Proceso", () => {
+      const ast = parse(`
+        SubProceso primera()
+          Escribir "1";
+        FinSubProceso
+
+        Proceso Main
+          primera();
+          segunda();
+        FinProceso
+
+        SubProceso segunda()
+          Escribir "2";
+        FinSubProceso
+      `);
+
+      expect(ast.subprograms).toHaveLength(2);
+      const names = ast.subprograms.map((s) => s.name).sort();
+      expect(names).toEqual(["primera", "segunda"]);
+    });
+  });
+
+  describe("CallStatementNode vs AssignNode", () => {
+    it("identificador seguido de '(' produce call_stmt, no assign", () => {
+      const ast = parse(`
+        Proceso Main
+          saludar();
+        FinProceso
+
+        SubProceso saludar()
+          Escribir "Hola";
+        FinSubProceso
+      `);
+
+      const stmt = ast.body[0] as CallStatementNode;
+      expect(stmt.kind).toBe("call_stmt");
+      expect(stmt.name).toBe("saludar");
+      expect(stmt.args).toHaveLength(0);
+    });
+
+    it("call_stmt con argumentos", () => {
+      const ast = parse(`
+        Proceso Main
+          saludar("mundo", 42);
+        FinProceso
+      `);
+
+      const stmt = ast.body[0] as CallStatementNode;
+      expect(stmt.kind).toBe("call_stmt");
+      expect(stmt.name).toBe("saludar");
+      expect(stmt.args).toHaveLength(2);
+    });
+
+    it("identificador seguido de '<-' produce assign (no call_stmt)", () => {
+      const ast = parse(`
+        Proceso Main
+          x <- 5;
+        FinProceso
+      `);
+
+      const stmt = ast.body[0] as AssignNode;
+      expect(stmt.kind).toBe("assign");
+      expect(stmt.target).toBe("x");
+    });
+  });
+
+  describe("Retornar", () => {
+    it("Retornar con expresión genera ReturnNode con value", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        Funcion r <- f()
+          Retornar 5;
+        FinFuncion
+      `);
+
+      const ret = ast.subprograms[0].body[0] as ReturnNode;
+      expect(ret.kind).toBe("return");
+      expect(ret.value).not.toBeNull();
+      expect(ret.value!.kind).toBe("number_literal");
+    });
+
+    it("Retornar sin expresión genera ReturnNode con value=null", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        SubProceso s()
+          Retornar;
+        FinSubProceso
+      `);
+
+      const ret = ast.subprograms[0].body[0] as ReturnNode;
+      expect(ret.kind).toBe("return");
+      expect(ret.value).toBeNull();
+    });
+  });
+
+  describe("parseParams (modos y tipos)", () => {
+    it("parámetros sin modificador → mode value", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        SubProceso s(a, b, c)
+        FinSubProceso
+      `);
+
+      const params = ast.subprograms[0].params;
+      expect(params).toHaveLength(3);
+      expect(params.every((p) => p.mode === "value")).toBe(true);
+    });
+
+    it("Por Valor explícito", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        SubProceso s(x Por Valor)
+        FinSubProceso
+      `);
+
+      expect(ast.subprograms[0].params[0].mode).toBe("value");
+    });
+
+    it("Por Referencia explícito", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        SubProceso s(x Por Referencia)
+        FinSubProceso
+      `);
+
+      expect(ast.subprograms[0].params[0].mode).toBe("ref");
+    });
+
+    it("mezcla de modos", () => {
+      const ast = parse(`
+        Proceso Main
+        FinProceso
+
+        SubProceso s(a Por Valor, b Por Referencia, c)
+        FinSubProceso
+      `);
+
+      const params = ast.subprograms[0].params;
+      expect(params[0].mode).toBe("value");
+      expect(params[1].mode).toBe("ref");
+      expect(params[2].mode).toBe("value");
     });
   });
 });

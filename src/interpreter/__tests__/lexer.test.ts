@@ -297,9 +297,9 @@ describe("Lexer", () => {
       expect(tokens[0].lexeme).toBe("año");
     });
 
-    it("función como keyword passthrough (identifier)", () => {
+    it("función se reconoce como keyword FUNCION", () => {
       const tokens = tokenize("función");
-      expect(tokens[0].type).toBe(TokenType.IDENTIFIER);
+      expect(tokens[0].type).toBe(TokenType.FUNCION);
     });
 
     it("identificadores con acentos", () => {
@@ -324,6 +324,60 @@ describe("Lexer", () => {
     it("Dimension y Dimensión se reconocen", () => {
       expect(tokenTypes("Dimension")[0]).toBe(TokenType.DIMENSION);
       expect(tokenTypes("Dimensión")[0]).toBe(TokenType.DIMENSION);
+    });
+  });
+
+  describe("subprogramas (Funcion / SubProceso)", () => {
+    it("Funcion produce token FUNCION", () => {
+      expect(tokenTypes("Funcion")[0]).toBe(TokenType.FUNCION);
+    });
+
+    it("Función (con tilde) produce token FUNCION", () => {
+      expect(tokenTypes("Función")[0]).toBe(TokenType.FUNCION);
+    });
+
+    it("SubProceso produce token SUBPROCESO", () => {
+      expect(tokenTypes("SubProceso")[0]).toBe(TokenType.SUBPROCESO);
+    });
+
+    it("Retornar produce token RETORNAR", () => {
+      expect(tokenTypes("Retornar")[0]).toBe(TokenType.RETORNAR);
+    });
+
+    it("FinFuncion produce FIN_FUNCION", () => {
+      expect(tokenTypes("FinFuncion")[0]).toBe(TokenType.FIN_FUNCION);
+    });
+
+    it("FinFunción (con tilde) produce FIN_FUNCION", () => {
+      expect(tokenTypes("FinFunción")[0]).toBe(TokenType.FIN_FUNCION);
+    });
+
+    it("Fin Funcion como dos palabras produce FIN_FUNCION", () => {
+      expect(tokenTypes("Fin Funcion")[0]).toBe(TokenType.FIN_FUNCION);
+    });
+
+    it("FinSubProceso produce FIN_SUBPROCESO", () => {
+      expect(tokenTypes("FinSubProceso")[0]).toBe(TokenType.FIN_SUBPROCESO);
+    });
+
+    it("Fin SubProceso como dos palabras produce FIN_SUBPROCESO", () => {
+      expect(tokenTypes("Fin SubProceso")[0]).toBe(TokenType.FIN_SUBPROCESO);
+    });
+
+    it("Por Valor produce POR_VALOR", () => {
+      const types = tokenTypes("Por Valor");
+      expect(types).toEqual([TokenType.POR_VALOR, TokenType.EOF]);
+    });
+
+    it("Por Referencia produce POR_REFERENCIA", () => {
+      const types = tokenTypes("Por Referencia");
+      expect(types).toEqual([TokenType.POR_REFERENCIA, TokenType.EOF]);
+    });
+
+    it("Por solo (sin Valor/Referencia) cae a IDENTIFIER", () => {
+      const types = tokenTypes("Por algo");
+      expect(types[0]).toBe(TokenType.IDENTIFIER);
+      expect(types[1]).toBe(TokenType.IDENTIFIER);
     });
   });
 

@@ -19,6 +19,10 @@ import type {
   NumberLiteralNode,
   BinaryOperator,
   UnaryOperator,
+  SubProcDeclNode,
+  ParamSpec,
+  CallStatementNode,
+  ReturnNode,
 } from "./ast";
 
 export class Parser {
@@ -30,6 +34,16 @@ export class Parser {
   }
 
   parse(): ProgramNode {
+    const subprograms: SubProcDeclNode[] = [];
+
+    // Collect SubProcDecls BEFORE Proceso/Algoritmo
+    while (
+      !this.isAtEnd() &&
+      (this.check(TokenType.SUBPROCESO) || this.check(TokenType.FUNCION))
+    ) {
+      subprograms.push(this.parseSubProc());
+    }
+
     const startToken = this.peek();
 
     // Expect PROCESO or ALGORITMO
@@ -71,10 +85,22 @@ export class Parser {
 
     this.advance(); // consume FIN_PROCESO / FIN_ALGORITMO
 
+    // Collect SubProcDecls AFTER FinProceso/FinAlgoritmo until EOF
+    while (!this.isAtEnd()) {
+      if (this.check(TokenType.SUBPROCESO) || this.check(TokenType.FUNCION)) {
+        subprograms.push(this.parseSubProc());
+      } else {
+        throw this.error(
+          "Solo se permiten declaraciones de SubProceso o Funcion después de FinProceso"
+        );
+      }
+    }
+
     return {
       kind: "program",
       name: nameToken.lexeme,
       body,
+      subprograms,
       line: startToken.line,
     };
   }
@@ -104,6 +130,8 @@ export class Parser {
         return this.parseSwitch();
       case TokenType.DIMENSION:
         return this.parseDimension();
+      case TokenType.RETORNAR:
+        return this.parseReturn();
       case TokenType.IDENTIFIER:
         return this.parseAssignOrArrayAssign();
       default:
@@ -160,7 +188,10 @@ export class Parser {
     };
   }
 
-  private parseAssignOrArrayAssign(): AssignNode | ArrayAssignNode {
+  private parseAssignOrArrayAssign():
+    | AssignNode
+    | ArrayAssignNode
+    | CallStatementNode {
     const nameToken = this.advance(); // consume identifier
     const name = nameToken.lexeme;
 
@@ -177,6 +208,26 @@ export class Parser {
         name,
         index,
         value,
+        line: nameToken.line,
+      };
+    }
+
+    // Call statement: name(args)
+    if (this.match(TokenType.LPAREN)) {
+      const args: ExpressionNode[] = [];
+      if (!this.check(TokenType.RPAREN)) {
+        args.push(this.parseExpression());
+        while (this.match(TokenType.COMMA)) {
+          args.push(this.parseExpression());
+        }
+      }
+      this.consume(TokenType.RPAREN, "Se esperaba ')'");
+      this.consumeOptionalSemicolon();
+
+      return {
+        kind: "call_stmt",
+        name,
+        args,
         line: nameToken.line,
       };
     }
@@ -448,6 +499,172 @@ export class Parser {
       name: nameToken.lexeme,
       size,
       line: dimToken.line,
+    };
+  }
+
+  // ── SubProc / Funcion declarations ──────────────────────────────
+
+  private parseSubProc(): SubProcDeclNode {
+    const startToken = this.advance(); // consume SUBPROCESO or FUNCION
+    const isFuncion = startToken.type === TokenType.FUNCION;
+
+    let returnVar: string | null = null;
+    let nameToken: Token;
+
+    // Look ahead: "<retVar> <- name(...)" pattern
+    // We try: IDENTIFIER ASSIGN IDENTIFIER LPAREN
+    if (
+      this.check(TokenType.IDENTIFIER) &&
+      this.tokens[this.current + 1]?.type === TokenType.ASSIGN
+    ) {
+      const retVarToken = this.advance(); // consume retVar identifier
+      returnVar = retVarToken.lexeme;
+      this.advance(); // consume ASSIGN
+      nameToken = this.consume(
+        TokenType.IDENTIFIER,
+        "Se esperaba el nombre del subprograma"
+      );
+    } else {
+      nameToken = this.consume(
+        TokenType.IDENTIFIER,
+        "Se esperaba el nombre del subprograma"
+      );
+    }
+
+    this.consume(TokenType.LPAREN, "Se esperaba '(' tras el nombre");
+    const params = this.parseParams();
+    this.consume(TokenType.RPAREN, "Se esperaba ')'");
+
+    // Optional explicit return type: "Como Real"
+    let returnType: string | undefined;
+    if (this.match(TokenType.COMO)) {
+      const typeToken = this.advance();
+      const validTypes = [
+        TokenType.TIPO_ENTERO,
+        TokenType.TIPO_REAL,
+        TokenType.TIPO_CADENA,
+        TokenType.TIPO_LOGICO,
+        TokenType.TIPO_CARACTER,
+      ];
+      if (!validTypes.includes(typeToken.type)) {
+        throw new PSeIntError(
+          `Se esperaba un tipo de dato válido, se encontró '${typeToken.lexeme}'`,
+          typeToken.line,
+          typeToken.column
+        );
+      }
+      returnType = typeToken.lexeme.toLowerCase();
+    }
+
+    this.consumeOptionalSemicolon();
+
+    // Body: until FIN_FUNCION or FIN_SUBPROCESO
+    const endKeyword = isFuncion
+      ? TokenType.FIN_FUNCION
+      : TokenType.FIN_SUBPROCESO;
+    const expectedEnd = isFuncion ? "FinFuncion" : "FinSubProceso";
+
+    const body: StatementNode[] = [];
+    while (!this.check(endKeyword) && !this.isAtEnd()) {
+      body.push(this.parseStatement());
+    }
+
+    if (this.isAtEnd()) {
+      throw this.error(`Se esperaba '${expectedEnd}'`);
+    }
+
+    this.advance(); // consume end keyword
+    this.consumeOptionalSemicolon();
+
+    return {
+      kind: "subproc_decl",
+      name: nameToken.lexeme,
+      returnVar,
+      returnType,
+      params,
+      body,
+      line: startToken.line,
+    };
+  }
+
+  private parseParams(): ParamSpec[] {
+    const params: ParamSpec[] = [];
+    if (this.check(TokenType.RPAREN)) {
+      return params;
+    }
+
+    params.push(this.parseSingleParam());
+    while (this.match(TokenType.COMMA)) {
+      params.push(this.parseSingleParam());
+    }
+
+    return params;
+  }
+
+  private parseSingleParam(): ParamSpec {
+    const nameToken = this.consume(
+      TokenType.IDENTIFIER,
+      "Se esperaba nombre del parámetro"
+    );
+
+    let mode: "value" | "ref" = "value";
+    if (this.match(TokenType.POR_VALOR)) {
+      mode = "value";
+    } else if (this.match(TokenType.POR_REFERENCIA)) {
+      mode = "ref";
+    }
+
+    // Optional explicit type: "Como Real"
+    let type: string | undefined;
+    if (this.match(TokenType.COMO)) {
+      const typeToken = this.advance();
+      const validTypes = [
+        TokenType.TIPO_ENTERO,
+        TokenType.TIPO_REAL,
+        TokenType.TIPO_CADENA,
+        TokenType.TIPO_LOGICO,
+        TokenType.TIPO_CARACTER,
+      ];
+      if (!validTypes.includes(typeToken.type)) {
+        throw new PSeIntError(
+          `Se esperaba un tipo de dato válido, se encontró '${typeToken.lexeme}'`,
+          typeToken.line,
+          typeToken.column
+        );
+      }
+      type = typeToken.lexeme.toLowerCase();
+    }
+
+    return { name: nameToken.lexeme, mode, type };
+  }
+
+  private parseReturn(): ReturnNode {
+    const retToken = this.advance(); // consume RETORNAR
+
+    // Optional expression (Retornar; or Retornar expr;)
+    let value: ExpressionNode | null = null;
+    if (
+      !this.check(TokenType.SEMICOLON) &&
+      !this.isStatementStart() &&
+      !this.check(TokenType.FIN_FUNCION) &&
+      !this.check(TokenType.FIN_SUBPROCESO) &&
+      !this.check(TokenType.FIN_SI) &&
+      !this.check(TokenType.FIN_MIENTRAS) &&
+      !this.check(TokenType.FIN_PARA) &&
+      !this.check(TokenType.FIN_SEGUN) &&
+      !this.check(TokenType.SINO) &&
+      !this.check(TokenType.HASTA_QUE) &&
+      !this.isAtEnd()
+    ) {
+      value = this.parseExpression();
+    }
+
+    this.consumeOptionalSemicolon();
+
+    return {
+      kind: "return",
+      value,
+      line: retToken.line,
     };
   }
 

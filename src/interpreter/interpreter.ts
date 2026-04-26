@@ -1,11 +1,18 @@
 import { PSeIntError } from "./errors";
-import { Environment } from "./environment";
+import {
+  Environment,
+  SubProgRegistry,
+  defaultValue,
+  normalizePSeIntType,
+} from "./environment";
 import { BUILTINS } from "./builtins";
-import type { PSeIntValue } from "./environment";
+import type { PSeIntValue, PSeIntType, RefCell } from "./environment";
 import type {
   ProgramNode,
   StatementNode,
   ExpressionNode,
+  SubProcDeclNode,
+  ParamSpec,
 } from "./ast";
 
 export interface InterpreterIO {
@@ -13,13 +20,26 @@ export interface InterpreterIO {
   read(prompt: string): Promise<string | undefined>;
 }
 
+/**
+ * Internal control-flow signal used by Retornar to early-exit a user-defined
+ * subprogram. NOT a PSeIntError — must be caught only by callUserFn.
+ */
+class ReturnSignal {
+  // marker class
+}
+
+const MAX_CALL_DEPTH = 500;
+
 export class Interpreter {
   private env: Environment;
+  private registry: SubProgRegistry;
+  private callDepth = 0;
   private iterationCount = 0;
   private readonly MAX_ITERATIONS = 1_000_000;
 
   constructor(private io: InterpreterIO) {
     this.env = new Environment();
+    this.registry = new SubProgRegistry();
   }
 
   private checkIterationLimit(line: number): void {
@@ -33,6 +53,14 @@ export class Interpreter {
 
   async execute(program: ProgramNode): Promise<void> {
     this.iterationCount = 0;
+    this.callDepth = 0;
+
+    // Pre-pass: register all subprograms BEFORE executing the main body.
+    // Allows forward refs and mutual recursion.
+    for (const decl of program.subprograms) {
+      this.registry.register(decl);
+    }
+
     await this.executeBlock(program.body);
   }
 
@@ -224,6 +252,30 @@ export class Interpreter {
         break;
       }
 
+      case "call_stmt": {
+        const decl = this.registry.lookup(stmt.name);
+        if (!decl) {
+          throw new PSeIntError(
+            `SubProceso o Función '${stmt.name}' no definido`,
+            stmt.line
+          );
+        }
+        await this.callUserFn(decl, stmt.args, stmt.line);
+        break;
+      }
+
+      case "return": {
+        if (stmt.value !== null) {
+          // Evaluate before pushing the signal — we need to write to retVar
+          const val = await this.evaluateExpression(stmt.value);
+          const frame = this.env.current();
+          if (frame.retVar) {
+            frame.set(frame.retVar, val, stmt.line);
+          }
+        }
+        throw new ReturnSignal();
+      }
+
       default: {
         const _exhaustive: never = stmt;
         throw new PSeIntError(`Sentencia desconocida: ${(_exhaustive as any).kind}`, 0);
@@ -255,6 +307,27 @@ export class Interpreter {
       }
 
       case "function_call": {
+        // 1. User-defined subprogram lookup first
+        const decl = this.registry.lookup(expr.name);
+        if (decl) {
+          if (decl.returnVar === null) {
+            throw new PSeIntError(
+              `SubProceso '${expr.name}' no retorna valor`,
+              expr.line
+            );
+          }
+          const result = await this.callUserFn(decl, expr.args, expr.line);
+          if (result === null) {
+            // Should not happen since returnVar !== null, but defensive:
+            throw new PSeIntError(
+              `SubProceso '${expr.name}' no retorna valor`,
+              expr.line
+            );
+          }
+          return result;
+        }
+
+        // 2. Builtins
         const args: PSeIntValue[] = [];
         for (const arg of expr.args) {
           args.push(await this.evaluateExpression(arg));
@@ -297,6 +370,134 @@ export class Interpreter {
         throw new PSeIntError(`Expresión desconocida: ${(_exhaustive as any).kind}`, 0);
       }
     }
+  }
+
+  /**
+   * Calls a user-defined subprogram with the given argument expressions.
+   * Returns the value of the return variable (Funcion) or null (SubProceso).
+   */
+  private async callUserFn(
+    decl: SubProcDeclNode,
+    argExprs: ExpressionNode[],
+    line: number
+  ): Promise<PSeIntValue | null> {
+    // 1. Depth guard
+    if (this.callDepth + 1 > MAX_CALL_DEPTH) {
+      throw new PSeIntError(
+        `Profundidad de llamadas excedida (${MAX_CALL_DEPTH})`,
+        line
+      );
+    }
+
+    // 2. Arity check
+    if (argExprs.length !== decl.params.length) {
+      const kind = decl.returnVar !== null ? "Función" : "SubProceso";
+      throw new PSeIntError(
+        `${kind} '${decl.name}' espera ${decl.params.length} argumento(s), recibió ${argExprs.length}`,
+        line
+      );
+    }
+
+    // 3. Resolve args in CALLER's frame BEFORE pushing.
+    //    For Por Valor: eval to a value.
+    //    For Por Referencia: build a RefCell against the caller's slot.
+    interface ResolvedArg {
+      param: ParamSpec;
+      value?: PSeIntValue;
+      ref?: RefCell;
+    }
+    const resolved: ResolvedArg[] = [];
+    for (let i = 0; i < decl.params.length; i++) {
+      const param = decl.params[i];
+      const argExpr = argExprs[i];
+
+      if (param.mode === "ref") {
+        // Must be Identifier or ArrayAccess
+        if (argExpr.kind === "identifier") {
+          const ref = this.env.refToVariable(argExpr.name, argExpr.line);
+          resolved.push({ param, ref });
+        } else if (argExpr.kind === "array_access") {
+          const idx = this.toNumber(
+            await this.evaluateExpression(argExpr.index),
+            argExpr.line
+          );
+          const ref = this.env.refToArraySlot(argExpr.name, idx, argExpr.line);
+          resolved.push({ param, ref });
+        } else {
+          throw new PSeIntError(
+            `El parámetro '${param.name}' es Por Referencia y requiere una variable o elemento de arreglo, no una expresión`,
+            argExpr.line
+          );
+        }
+      } else {
+        const value = await this.evaluateExpression(argExpr);
+        resolved.push({ param, value });
+      }
+    }
+
+    // 4. Push new frame
+    this.callDepth++;
+    const frame = this.env.pushFrame();
+
+    try {
+      // 5. Bind params in the new frame
+      for (const r of resolved) {
+        if (r.ref) {
+          frame.bindRef(r.param.name, r.ref);
+        } else {
+          // Por Valor: define + set. Type: explicit or inferred.
+          const type = this.inferParamType(r.param, r.value!);
+          frame.defineWithValue(r.param.name, type, r.value!, line);
+        }
+      }
+
+      // 6. Track retVar
+      if (decl.returnVar !== null) {
+        const retType: PSeIntType = decl.returnType
+          ? normalizePSeIntType(decl.returnType)
+          : "Real";
+        frame.defineWithValue(
+          decl.returnVar,
+          retType,
+          defaultValue(retType),
+          line
+        );
+        frame.retVar = decl.returnVar;
+      }
+
+      // 7. Execute body, catching ReturnSignal
+      try {
+        await this.executeBlock(decl.body);
+      } catch (e) {
+        if (e instanceof ReturnSignal) {
+          // ok — early exit
+        } else {
+          throw e;
+        }
+      }
+
+      // 8. Read retVar value
+      let result: PSeIntValue | null = null;
+      if (decl.returnVar !== null) {
+        result = frame.get(decl.returnVar, line);
+      }
+
+      return result;
+    } finally {
+      // 9. Pop frame, decrement depth
+      this.env.popFrame();
+      this.callDepth--;
+    }
+  }
+
+  private inferParamType(param: ParamSpec, value: PSeIntValue): PSeIntType {
+    if (param.type) {
+      return normalizePSeIntType(param.type);
+    }
+    if (typeof value === "number") return "Real";
+    if (typeof value === "string") return "Cadena";
+    if (typeof value === "boolean") return "Logico";
+    return "Real";
   }
 
   private evaluateBinary(
