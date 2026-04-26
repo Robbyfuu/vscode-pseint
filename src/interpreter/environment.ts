@@ -76,10 +76,44 @@ interface Variable {
   value: PSeIntValue;
 }
 
-interface ArrayData {
+export interface ArrayData {
   type: PSeIntType;
-  size: number;
+  /** N-dimensional sizes (1D = [N], 2D = [F, C], 3D = [X, Y, Z], etc.). */
+  dims: number[];
+  /** Flat row-major storage: length = dims.reduce((a, b) => a * b, 1). */
   elements: PSeIntValue[];
+}
+
+/**
+ * Convierte un vector de índices base-1 al índice plano (row-major) usando dims.
+ * Lanza PSeIntError si el número de índices no coincide con dims o algún índice
+ * está fuera de rango / no es entero.
+ */
+export function flatIndex(
+  indices: number[],
+  dims: number[],
+  line: number
+): number {
+  if (indices.length !== dims.length) {
+    throw new PSeIntError(
+      `El arreglo tiene ${dims.length} dimensión(es), se proveyeron ${indices.length}`,
+      line
+    );
+  }
+  let flat = 0;
+  let stride = 1;
+  for (let k = dims.length - 1; k >= 0; k--) {
+    const idx = indices[k];
+    if (!Number.isInteger(idx) || idx < 1 || idx > dims[k]) {
+      throw new PSeIntError(
+        `Índice ${idx} fuera de rango [1..${dims[k]}] en dimensión ${k + 1}`,
+        line
+      );
+    }
+    flat += (idx - 1) * stride;
+    stride *= dims[k];
+  }
+  return flat;
 }
 
 export interface RefCell {
@@ -155,52 +189,52 @@ export class Frame {
     return this.variables.get(this.key(name))?.type;
   }
 
-  // ── Array storage (1D, base-1 indexing) ───────────────────────────
+  // ── Array storage (N-dimensional, base-1 indexing, row-major) ─────
 
-  dimensionArray(name: string, size: number, line: number): void {
-    if (size <= 0 || !Number.isInteger(size)) {
+  dimensionArray(name: string, dims: number[], line: number): void {
+    if (dims.length === 0) {
       throw new PSeIntError(
-        `El tamaño del arreglo debe ser un entero positivo, recibió ${size}`,
+        `El arreglo '${name}' debe tener al menos una dimensión`,
         line
       );
     }
+    for (let k = 0; k < dims.length; k++) {
+      const d = dims[k];
+      if (!Number.isInteger(d) || d <= 0) {
+        throw new PSeIntError(
+          `El tamaño del arreglo debe ser un entero positivo, recibió ${d} en dimensión ${k + 1}`,
+          line
+        );
+      }
+    }
+    const total = dims.reduce((a, b) => a * b, 1);
     const k = this.key(name);
     if (!this.variables.has(k)) {
       this.define(name, "Real");
     }
     const type = this.variables.get(k)!.type;
-    const elements = Array.from({ length: size }, () => defaultValue(type));
-    this.arrays.set(k, { type, size, elements });
+    const elements = Array.from({ length: total }, () => defaultValue(type));
+    this.arrays.set(k, { type, dims: [...dims], elements });
   }
 
-  getArray(name: string, index: number, line: number): PSeIntValue {
+  getArray(name: string, indices: number[], line: number): PSeIntValue {
     const k = this.key(name);
     const arr = this.arrays.get(k);
     if (!arr) {
       throw new PSeIntError(`Arreglo '${name}' no definido`, line);
     }
-    if (index < 1 || index > arr.size || !Number.isInteger(index)) {
-      throw new PSeIntError(
-        `Índice ${index} fuera de rango [1..${arr.size}] en línea ${line}`,
-        line
-      );
-    }
-    return arr.elements[index - 1];
+    const flat = flatIndex(indices, arr.dims, line);
+    return arr.elements[flat];
   }
 
-  setArray(name: string, index: number, value: PSeIntValue, line: number): void {
+  setArray(name: string, indices: number[], value: PSeIntValue, line: number): void {
     const k = this.key(name);
     const arr = this.arrays.get(k);
     if (!arr) {
       throw new PSeIntError(`Arreglo '${name}' no definido`, line);
     }
-    if (index < 1 || index > arr.size || !Number.isInteger(index)) {
-      throw new PSeIntError(
-        `Índice ${index} fuera de rango [1..${arr.size}] en línea ${line}`,
-        line
-      );
-    }
-    arr.elements[index - 1] = coerce(value, arr.type, line);
+    const flat = flatIndex(indices, arr.dims, line);
+    arr.elements[flat] = coerce(value, arr.type, line);
   }
 
   isArray(name: string): boolean {
@@ -267,16 +301,16 @@ export class Environment {
     return this.current().getType(name);
   }
 
-  dimensionArray(name: string, size: number, line: number): void {
-    this.current().dimensionArray(name, size, line);
+  dimensionArray(name: string, dims: number[], line: number): void {
+    this.current().dimensionArray(name, dims, line);
   }
 
-  getArray(name: string, index: number, line: number): PSeIntValue {
-    return this.current().getArray(name, index, line);
+  getArray(name: string, indices: number[], line: number): PSeIntValue {
+    return this.current().getArray(name, indices, line);
   }
 
-  setArray(name: string, index: number, value: PSeIntValue, line: number): void {
-    this.current().setArray(name, index, value, line);
+  setArray(name: string, indices: number[], value: PSeIntValue, line: number): void {
+    this.current().setArray(name, indices, value, line);
   }
 
   isArray(name: string): boolean {
@@ -317,39 +351,41 @@ export class Environment {
 
   /**
    * Creates a RefCell that proxies reads/writes to a specific array slot.
-   * Captures (array data, index) at bind time. Index range is validated at
-   * bind time AND at every access (re-validated against current size).
+   * Captures (frame, name, indices) at bind time and re-resolves the ArrayData
+   * via frame.getArrayData(name) on every get/set. This means if `Dimension`
+   * is re-executed and the underlying ArrayData object is replaced in the Map,
+   * the RefCell automatically points to the NEW data (no stale capture — fixes H2).
+   *
+   * Range/arity is validated both at bind time AND on every access.
    */
-  refToArraySlot(name: string, index: number, line: number): RefCell {
+  refToArraySlot(name: string, indices: number[], line: number): RefCell {
     const frame = this.current();
-    const arr = frame.getArrayData(name);
-    if (!arr) {
+    const arr0 = frame.getArrayData(name);
+    if (!arr0) {
       throw new PSeIntError(`Arreglo '${name}' no definido`, line);
     }
-    if (index < 1 || index > arr.size || !Number.isInteger(index)) {
-      throw new PSeIntError(
-        `Índice ${index} fuera de rango [1..${arr.size}] en línea ${line}`,
-        line
-      );
-    }
+    // Validar al bind para detectar errores temprano.
+    flatIndex(indices, arr0.dims, line);
+
+    // Capturamos un snapshot inmutable de los índices para evitar mutaciones externas.
+    const capturedIndices = [...indices];
+
     return {
       get: () => {
-        if (index < 1 || index > arr.size) {
-          throw new PSeIntError(
-            `Índice ${index} fuera de rango [1..${arr.size}]`,
-            line
-          );
+        const arr = frame.getArrayData(name);
+        if (!arr) {
+          throw new PSeIntError(`Arreglo '${name}' no definido`, line);
         }
-        return arr.elements[index - 1];
+        const flat = flatIndex(capturedIndices, arr.dims, line);
+        return arr.elements[flat];
       },
       set: (value: PSeIntValue, l: number) => {
-        if (index < 1 || index > arr.size) {
-          throw new PSeIntError(
-            `Índice ${index} fuera de rango [1..${arr.size}]`,
-            l
-          );
+        const arr = frame.getArrayData(name);
+        if (!arr) {
+          throw new PSeIntError(`Arreglo '${name}' no definido`, l);
         }
-        arr.elements[index - 1] = coerce(value, arr.type, l);
+        const flat = flatIndex(capturedIndices, arr.dims, l);
+        arr.elements[flat] = coerce(value, arr.type, l);
       },
     };
   }

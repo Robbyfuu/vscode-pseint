@@ -326,7 +326,7 @@ describe("Parser", () => {
   });
 
   describe("Dimension", () => {
-    it("parsea declaración de arreglo", () => {
+    it("parsea declaración de arreglo 1D con sizes de un elemento", () => {
       const ast = parse(`
         Proceso Test
           Dimension arr[10];
@@ -336,12 +336,52 @@ describe("Parser", () => {
       const dim = ast.body[0] as DimensionNode;
       expect(dim.kind).toBe("dimension");
       expect(dim.name).toBe("arr");
-      expect(dim.size.kind).toBe("number_literal");
+      expect(dim.sizes).toHaveLength(1);
+      expect(dim.sizes[0].kind).toBe("number_literal");
+      if (dim.sizes[0].kind === "number_literal") {
+        expect(dim.sizes[0].value).toBe(10);
+      }
+    });
+
+    it("parsea declaración de matriz 2D Dimension a[3, 4]", () => {
+      const ast = parse(`
+        Proceso Test
+          Dimension a[3, 4];
+        FinProceso
+      `);
+
+      const dim = ast.body[0] as DimensionNode;
+      expect(dim.kind).toBe("dimension");
+      expect(dim.name).toBe("a");
+      expect(dim.sizes).toHaveLength(2);
+      if (dim.sizes[0].kind === "number_literal") {
+        expect(dim.sizes[0].value).toBe(3);
+      }
+      if (dim.sizes[1].kind === "number_literal") {
+        expect(dim.sizes[1].value).toBe(4);
+      }
+    });
+
+    it("parsea declaración de cubo 3D Dimension cubo[2, 3, 4]", () => {
+      const ast = parse(`
+        Proceso Test
+          Dimension cubo[2, 3, 4];
+        FinProceso
+      `);
+
+      const dim = ast.body[0] as DimensionNode;
+      expect(dim.sizes).toHaveLength(3);
+      if (dim.sizes[0].kind === "number_literal") {
+        expect(dim.sizes[0].value).toBe(2);
+      }
+      if (dim.sizes[2].kind === "number_literal") {
+        expect(dim.sizes[2].value).toBe(4);
+      }
     });
   });
 
   describe("asignación de arreglo", () => {
-    it("parsea arr[1] <- 10", () => {
+    it("parsea arr[1] <- 10 con indices de un elemento", () => {
       const ast = parse(`
         Proceso Test
           arr[1] <- 10;
@@ -351,8 +391,60 @@ describe("Parser", () => {
       const arrayAssign = ast.body[0] as ArrayAssignNode;
       expect(arrayAssign.kind).toBe("array_assign");
       expect(arrayAssign.name).toBe("arr");
-      expect(arrayAssign.index.kind).toBe("number_literal");
+      expect(arrayAssign.indices).toHaveLength(1);
+      expect(arrayAssign.indices[0].kind).toBe("number_literal");
       expect(arrayAssign.value.kind).toBe("number_literal");
+    });
+
+    it("parsea a[i, j] <- v con dos indices", () => {
+      const ast = parse(`
+        Proceso Test
+          a[i, j] <- v;
+        FinProceso
+      `);
+
+      const arrayAssign = ast.body[0] as ArrayAssignNode;
+      expect(arrayAssign.kind).toBe("array_assign");
+      expect(arrayAssign.name).toBe("a");
+      expect(arrayAssign.indices).toHaveLength(2);
+      expect(arrayAssign.indices[0].kind).toBe("identifier");
+      expect(arrayAssign.indices[1].kind).toBe("identifier");
+    });
+  });
+
+  describe("acceso a arreglo en expresión", () => {
+    it("parsea Escribir a[i, j] como array_access con indices de longitud 2", () => {
+      const ast = parse(`
+        Proceso Test
+          Escribir a[i, j];
+        FinProceso
+      `);
+
+      const write = ast.body[0] as WriteNode;
+      expect(write.expressions).toHaveLength(1);
+      const acc = write.expressions[0];
+      expect(acc.kind).toBe("array_access");
+      if (acc.kind === "array_access") {
+        expect(acc.name).toBe("a");
+        expect(acc.indices).toHaveLength(2);
+        expect(acc.indices[0].kind).toBe("identifier");
+        expect(acc.indices[1].kind).toBe("identifier");
+      }
+    });
+
+    it("parsea acceso 3D cubo[1, 2, 3]", () => {
+      const ast = parse(`
+        Proceso Test
+          Escribir cubo[1, 2, 3];
+        FinProceso
+      `);
+
+      const write = ast.body[0] as WriteNode;
+      const acc = write.expressions[0];
+      expect(acc.kind).toBe("array_access");
+      if (acc.kind === "array_access") {
+        expect(acc.indices).toHaveLength(3);
+      }
     });
   });
 

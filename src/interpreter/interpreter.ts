@@ -97,14 +97,13 @@ export class Interpreter {
       }
 
       case "array_assign": {
-        const index = await this.evaluateExpression(stmt.index);
+        const indices: number[] = [];
+        for (const idxExpr of stmt.indices) {
+          const idxVal = await this.evaluateExpression(idxExpr);
+          indices.push(this.toNumber(idxVal, stmt.line));
+        }
         const value = await this.evaluateExpression(stmt.value);
-        this.env.setArray(
-          stmt.name,
-          this.toNumber(index, stmt.line),
-          value,
-          stmt.line
-        );
+        this.env.setArray(stmt.name, indices, value, stmt.line);
         break;
       }
 
@@ -256,11 +255,15 @@ export class Interpreter {
       }
 
       case "dimension": {
-        const size = this.toNumber(
-          await this.evaluateExpression(stmt.size),
-          stmt.line
-        );
-        this.env.dimensionArray(stmt.name, size, stmt.line);
+        const dims: number[] = [];
+        for (const sizeExpr of stmt.sizes) {
+          const sizeVal = this.toNumber(
+            await this.evaluateExpression(sizeExpr),
+            stmt.line
+          );
+          dims.push(sizeVal);
+        }
+        this.env.dimensionArray(stmt.name, dims, stmt.line);
         break;
       }
 
@@ -342,12 +345,12 @@ export class Interpreter {
         return this.env.get(expr.name, expr.line);
 
       case "array_access": {
-        const index = await this.evaluateExpression(expr.index);
-        return this.env.getArray(
-          expr.name,
-          this.toNumber(index, expr.line),
-          expr.line
-        );
+        const indices: number[] = [];
+        for (const idxExpr of expr.indices) {
+          const idxVal = await this.evaluateExpression(idxExpr);
+          indices.push(this.toNumber(idxVal, expr.line));
+        }
+        return this.env.getArray(expr.name, indices, expr.line);
       }
 
       case "function_call": {
@@ -461,11 +464,16 @@ export class Interpreter {
           const ref = this.env.refToVariable(argExpr.name, argExpr.line);
           resolved.push({ param, ref });
         } else if (argExpr.kind === "array_access") {
-          const idx = this.toNumber(
-            await this.evaluateExpression(argExpr.index),
+          const indices: number[] = [];
+          for (const idxExpr of argExpr.indices) {
+            const idxVal = await this.evaluateExpression(idxExpr);
+            indices.push(this.toNumber(idxVal, argExpr.line));
+          }
+          const ref = this.env.refToArraySlot(
+            argExpr.name,
+            indices,
             argExpr.line
           );
-          const ref = this.env.refToArraySlot(argExpr.name, idx, argExpr.line);
           resolved.push({ param, ref });
         } else {
           throw new PSeIntError(

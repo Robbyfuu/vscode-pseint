@@ -78,7 +78,7 @@ Detecta errores mientras escribes:
 | **Condicionales** | `Si...Entonces...SiNo...FinSi` |
 | **Ciclos** | `Mientras...Hacer`, `Para...Hasta...Con Paso`, `Repetir...Hasta Que` |
 | **Selección** | `Segun...Hacer...De Otro Modo...FinSegun` |
-| **Arreglos** | `Dimension` (1D, indexación base-1) |
+| **Arreglos** | `Dimension` 1D, 2D (matrices) y N-dimensional, indexación base-1 |
 | **Operadores** | `+`, `-`, `*`, `/`, `^`, `MOD`, `=`, `<>`, `<`, `>`, `Y`, `O`, `NO` |
 
 ### Funciones y SubProcesos definidos por el usuario
@@ -113,6 +113,33 @@ Detalles:
 - `Por Valor` copia el argumento (default). `Por Referencia` permite mutar variables o elementos de arreglo del caller.
 - `Retornar [expr];` permite salida temprana. En `Funcion`, asigna el valor a la variable de retorno.
 - Profundidad máxima de llamadas: 500 (suficiente para recursión razonable).
+
+### Arreglos N-dimensionales (matrices y cubos)
+
+`Dimension` admite arreglos de cualquier número de dimensiones. Indexación base-1 estilo PSeInt clásico:
+
+```
+Proceso Matrices
+  Definir i, j Como Entero;
+  Dimension a[3, 4];          // matriz 3x4 (12 elementos, row-major)
+  Para i <- 1 Hasta 3 Hacer
+    Para j <- 1 Hasta 4 Hacer
+      a[i, j] <- i * 10 + j;
+    FinPara
+  FinPara
+  Escribir a[2, 3];           // imprime 23
+
+  // Cubos 3D y superior también funcionan
+  Dimension cubo[2, 3, 4];
+  cubo[1, 1, 1] <- 100;
+FinProceso
+```
+
+Errores reportados en español:
+
+- `El arreglo tiene N dimensión(es), se proveyeron M` cuando la aridad de los índices no coincide.
+- `Índice X fuera de rango [1..N] en dimensión K` cuando un índice se sale del rango.
+- `El tamaño del arreglo debe ser un entero positivo, recibió X en dimensión K` al declarar dimensiones inválidas.
 
 ### Funciones incorporadas
 

@@ -36,7 +36,8 @@ export interface IdentifierNode {
 export interface ArrayAccessNode {
   kind: "array_access";
   name: string;
-  index: ExpressionNode;
+  /** N-dimensional indices (1D = array of length 1, 2D matrix = length 2, etc.). */
+  indices: ExpressionNode[];
   line: number;
 }
 
@@ -122,7 +123,8 @@ export interface AssignNode {
 export interface ArrayAssignNode {
   kind: "array_assign";
   name: string;
-  index: ExpressionNode;
+  /** N-dimensional indices (1D = array of length 1, 2D matrix = length 2, etc.). */
+  indices: ExpressionNode[];
   value: ExpressionNode;
   line: number;
 }
@@ -188,7 +190,8 @@ export interface SwitchNode {
 export interface DimensionNode {
   kind: "dimension";
   name: string;
-  size: ExpressionNode;
+  /** N-dimensional sizes (1D = array of length 1, 2D matrix = length 2, etc.). */
+  sizes: ExpressionNode[];
   line: number;
 }
 

@@ -225,8 +225,11 @@ export class Parser {
     const name = nameToken.lexeme;
 
     if (this.match(TokenType.LBRACKET)) {
-      // Array assignment: arr[idx] <- expr
-      const index = this.parseExpression();
+      // Array assignment: arr[idx1, idx2, ...] <- expr
+      const indices: ExpressionNode[] = [this.parseExpression()];
+      while (this.match(TokenType.COMMA)) {
+        indices.push(this.parseExpression());
+      }
       this.consume(TokenType.RBRACKET, "Se esperaba ']'");
       this.consume(TokenType.ASSIGN, "Se esperaba '<-'");
       const value = this.parseExpression();
@@ -235,7 +238,7 @@ export class Parser {
       return {
         kind: "array_assign",
         name,
-        index,
+        indices,
         value,
         line: nameToken.line,
       };
@@ -519,14 +522,17 @@ export class Parser {
       "Se esperaba nombre del arreglo"
     );
     this.consume(TokenType.LBRACKET, "Se esperaba '['");
-    const size = this.parseExpression();
+    const sizes: ExpressionNode[] = [this.parseExpression()];
+    while (this.match(TokenType.COMMA)) {
+      sizes.push(this.parseExpression());
+    }
     this.consume(TokenType.RBRACKET, "Se esperaba ']'");
     this.consumeOptionalSemicolon();
 
     return {
       kind: "dimension",
       name: nameToken.lexeme,
-      size,
+      sizes,
       line: dimToken.line,
     };
   }
@@ -886,15 +892,18 @@ export class Parser {
     if (this.check(TokenType.IDENTIFIER)) {
       this.advance();
 
-      // Array access: name[index]
+      // Array access: name[idx1, idx2, ...]
       if (this.check(TokenType.LBRACKET)) {
         this.advance(); // consume [
-        const index = this.parseExpression();
+        const indices: ExpressionNode[] = [this.parseExpression()];
+        while (this.match(TokenType.COMMA)) {
+          indices.push(this.parseExpression());
+        }
         this.consume(TokenType.RBRACKET, "Se esperaba ']'");
         return {
           kind: "array_access",
           name: token.lexeme,
-          index,
+          indices,
           line: token.line,
         };
       }
