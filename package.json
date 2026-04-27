@@ -2,7 +2,7 @@
   "name": "vscode-pseint",
   "displayName": "PSeInt - Pseudocódigo en Español",
   "description": "Soporte completo para pseudocódigo PSeInt (.psc): sintaxis, snippets, intérprete embebido, ejecución y validación",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "publisher": "Robbyfuu",
   "license": "MIT",
   "icon": "icons/pseint-icon.png",
@@ -71,12 +71,6 @@
       {
         "command": "pseint.run",
         "title": "Ejecutar archivo PSeInt",
-        "icon": "$(play)",
-        "category": "PSeInt"
-      },
-      {
-        "command": "pseint.runSelection",
-        "title": "Ejecutar selección en PSeInt",
         "icon": "$(play)",
         "category": "PSeInt"
       },
@@ -171,7 +165,7 @@
   "devDependencies": {
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.74.0",
-    "@vscode/vsce": "^3.0.0",
+    "@vscode/vsce": "3.9.1",
     "ovsx": "^0.10.10",
     "typescript": "^5.3.0",
     "vitest": "^4.1.4"

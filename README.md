@@ -7,7 +7,7 @@
 1. Instala la extensión desde el marketplace
 2. Crea un archivo `.psc`
 3. Escribe tu programa (los snippets te ayudan — escribe `proceso` y presiona Tab)
-4. Ejecuta con `Cmd+Shift+I` (Mac) / `Ctrl+Shift+I` (Windows/Linux)
+4. Ejecuta con `F5` (o el botón ▶ de la barra superior del editor)
 
 ```
 Proceso HolaMundo
@@ -21,7 +21,7 @@ FinProceso
 
 Ejecuta programas PSeInt directamente en el editor. No necesitas descargar ni configurar PSeInt.
 
-- **Cmd+Shift+I** para ejecutar
+- **F5** para ejecutar (o el botón ▶ del editor)
 - Salida en el panel "PSeInt - Intérprete"
 - Entrada de datos via cuadro de diálogo (`Leer`)
 - Errores en español con número de línea
@@ -173,8 +173,9 @@ Errores reportados en español:
 
 | Atajo | Acción |
 |-------|--------|
-| `Cmd+Shift+I` / `Ctrl+Shift+I` | Ejecutar con intérprete embebido |
-| `Cmd+Shift+R` / `Ctrl+Shift+R` | Ejecutar con PSeInt nativo (requiere PSeInt instalado) |
+| `F5` | Ejecutar el archivo PSeInt actual |
+
+`F5` ejecuta con PSeInt nativo si está instalado y detectable; en caso contrario usa automáticamente el intérprete embebido. El botón ▶ de la barra superior del editor hace lo mismo.
 
 ## Configuración
 
@@ -215,12 +216,15 @@ La extensión incluye programas de ejemplo en la carpeta `examples/`:
 
 El intérprete embebido cubre las instrucciones más usadas en cursos introductorios. Aún **no soporta**:
 
-- Arreglos multidimensionales
-- Funciones trigonométricas (SEN, COS, TAN, LN, EXP)
+- Closures / clausuras
+- Funciones de orden superior (pasar funciones como argumento)
+- Parámetros con valor por defecto
+- Sobrecarga de funciones
+- Tipo `Caracter` con enforcement de longitud 1
 - Depuración paso a paso
-- Archivos
+- Operaciones con archivos
 
-Para programas avanzados, usa la ejecución con PSeInt nativo (`Cmd+Shift+R`).
+Para esos casos avanzados, usa la ejecución con PSeInt nativo: configura `pseint.executablePath` y presiona `F5`.
 
 ## Contribuir
 
@@ -229,7 +233,7 @@ git clone https://github.com/Robbyfuu/vscode-pseint.git
 cd vscode-pseint
 pnpm install
 pnpm run watch    # compilación en modo watch
-pnpm test         # correr tests (201 tests)
+pnpm test         # correr tests (281 tests)
 ```
 
 Presiona `F5` en VS Code para abrir una ventana de desarrollo con la extensión cargada.

@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { execFile } from "child_process";
 import { interpretSource, PSeIntError } from "./interpreter";
 import { VSCodeIO } from "./interpreter/runtime";
 
@@ -91,7 +90,8 @@ async function runPseintFile(uri?: vscode.Uri) {
   const terminal = getOrCreateTerminal();
 
   if (config.get<boolean>("clearTerminalBeforeRun")) {
-    terminal.sendText("clear");
+    const isWin = process.platform === "win32";
+    terminal.sendText(isWin ? "cls" : "clear");
   }
 
   const quotedPath = `"${filePath}"`;
@@ -99,43 +99,6 @@ async function runPseintFile(uri?: vscode.Uri) {
 
   terminal.show(true);
   terminal.sendText(command);
-}
-
-function openWithPseintApp(filePath: string) {
-  const platform = process.platform;
-
-  if (platform === "darwin") {
-    const appPaths = [
-      "/Applications/PSeInt.app",
-      path.join(process.env.HOME || "", "Applications/PSeInt.app"),
-    ];
-
-    const appPath = appPaths.find((p) => fs.existsSync(p));
-
-    if (appPath) {
-      execFile("open", ["-a", appPath, filePath], (err) => {
-        if (err) {
-          vscode.window.showErrorMessage(`Error al abrir PSeInt: ${err.message}`);
-        }
-      });
-    } else {
-      vscode.window.showErrorMessage(
-        "No se encontró PSeInt.app. Instala PSeInt desde: http://pseint.sourceforge.net/"
-      );
-    }
-  } else if (platform === "linux") {
-    execFile("xdg-open", [filePath], (err) => {
-      if (err) {
-        vscode.window.showErrorMessage(`Error al abrir archivo: ${err.message}`);
-      }
-    });
-  } else if (platform === "win32") {
-    execFile("cmd", ["/c", "start", "", filePath], (err) => {
-      if (err) {
-        vscode.window.showErrorMessage(`Error al abrir archivo: ${err.message}`);
-      }
-    });
-  }
 }
 
 async function runWithInterpreter(uri?: vscode.Uri) {
@@ -312,14 +275,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("pseint.runInterpreter", (uri?: vscode.Uri) => {
       return runWithInterpreter(uri);
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("pseint.runSelection", () => {
-      return vscode.window.showInformationMessage(
-        "Ejecutar selección aún no implementado."
-      );
     })
   );
 
