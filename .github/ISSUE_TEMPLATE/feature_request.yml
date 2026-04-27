@@ -1,0 +1,27 @@
+name: ✨ Solicitud de feature
+description: Sugerir una nueva característica
+labels: [enhancement]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivación
+      description: ¿Qué problema resuelve o qué caso de uso habilita?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propuesta
+      description: Describe la solución que te gustaría
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+  - type: textarea
+    id: pseint-spec
+    attributes:
+      label: Referencia PSeInt (si aplica)
+      description: Si es una característica del PSeInt clásico, agrega un enlace o ejemplo

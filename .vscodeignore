@@ -4,11 +4,17 @@ src/**
 node_modules/**
 .git/**
 .atl/**
+.claude/**
+.github/**
 .gitignore
 tsconfig.json
 vitest.config.ts
 pnpm-lock.yaml
+package-lock.json
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
 **/*.ts
 **/*.map
 **/*.test.*
 **/__tests__/**
+*.vsix

@@ -1,5 +1,12 @@
 # PSeInt - Pseudocódigo en Español
 
+[![Version](https://img.shields.io/visual-studio-marketplace/v/Robbyfuu.vscode-pseint?label=VS%20Code%20Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=Robbyfuu.vscode-pseint)
+[![Open VSX](https://img.shields.io/open-vsx/v/Robbyfuu/vscode-pseint?label=Open%20VSX&color=purple)](https://open-vsx.org/extension/Robbyfuu/vscode-pseint)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/Robbyfuu.vscode-pseint?label=Downloads)](https://marketplace.visualstudio.com/items?itemName=Robbyfuu.vscode-pseint)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/Robbyfuu.vscode-pseint?label=Rating)](https://marketplace.visualstudio.com/items?itemName=Robbyfuu.vscode-pseint&ssr=false#review-details)
+[![CI](https://github.com/Robbyfuu/vscode-pseint/actions/workflows/ci.yml/badge.svg)](https://github.com/Robbyfuu/vscode-pseint/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/Robbyfuu/vscode-pseint)](LICENSE)
+
 > Escribe, ejecuta y aprende pseudocódigo PSeInt directamente en VS Code y Cursor. **Sin instalar nada más.**
 
 ## Inicio rápido

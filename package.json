@@ -2,10 +2,14 @@
   "name": "vscode-pseint",
   "displayName": "PSeInt - Pseudocódigo en Español",
   "description": "Soporte completo para pseudocódigo PSeInt (.psc): sintaxis, snippets, intérprete embebido, ejecución y validación",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "publisher": "Robbyfuu",
   "license": "MIT",
   "icon": "icons/pseint-icon.png",
+  "galleryBanner": {
+    "color": "#1e3a5f",
+    "theme": "dark"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Robbyfuu/vscode-pseint"

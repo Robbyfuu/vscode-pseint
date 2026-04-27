@@ -1,0 +1,62 @@
+name: 🐛 Reporte de bug
+description: Reportar un problema con la extensión
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por reportar un bug. Por favor completa la información para que podamos investigar.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: ¿Qué pasó?
+      description: Descripción del problema
+      placeholder: Ej. al ejecutar `Funcion ... FinFuncion` el intérprete tira error...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Pasos para reproducir
+      placeholder: |
+        1. Abrir archivo `.psc`
+        2. Pegar el siguiente código...
+        3. Presionar F5
+        4. Observar error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamiento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Código PSeInt (si aplica)
+      render: pseint
+  - type: input
+    id: vscode-version
+    attributes:
+      label: Versión de VS Code
+      placeholder: 1.85.0
+    validations:
+      required: true
+  - type: input
+    id: extension-version
+    attributes:
+      label: Versión de la extensión
+      placeholder: 0.6.6
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Sistema operativo
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
